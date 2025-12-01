@@ -194,9 +194,9 @@ def encrypt_logs(log_data_list):
 	# Combine all log data into one byte stream
 	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 	
-	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8'), content for filename, content in log_data_list)
+	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in log_data_list))
 
-        # Sign the file
+    # Sign the file
 	sig = file_signature(client_private_key, file_data)
 	print('File signed successfully.')
 
