@@ -1,0 +1,3 @@
+ NOTE that this code is only for dealing with short information. 
+
+-JM
