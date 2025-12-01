@@ -7,7 +7,7 @@ def generate_and_hash_keys():
     hash1 = hashlib.sha256(password.encode(), usedforsecurity=True)
     return password, hash1.hexdigest()
     
-
+# Test (ignore or delete)
 password, hashed_password = generate_and_hash_keys()
 print("Generated Password:", password)
 print("Hashed Password:", hashed_password)
