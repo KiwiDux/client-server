@@ -125,9 +125,9 @@ def encrypt_logs(decrypted_file_data):
 	return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
 
 def save_log_file(encryption_result):
-    save_folder = 'C:/LOGFILES/'
-    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = os.path.join(save_folder, current_time + ".txt")
+	save_folder = 'C:/LOGFILES/'
+	current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+	filename = os.path.join(save_folder, current_time + ".txt")
 	log_file = open(filename, "x") 
 	with open(filename, "a") as log_file:
 		log_file.write(encryption_result)
@@ -151,7 +151,7 @@ def start_server():
 	connection, address = server_socket.accept()
 	print('Connection from', (address))
 	print('Connection established at', datetime.now())
-	
+
 	# Receive the encrypted AES key
 	aes_key_encrypted = connection.recv(256)  # RSA-encrypted AES key
 	print('Encrypted AES key received.', (aes_key_encrypted))
@@ -204,20 +204,20 @@ def start_server():
 		print('Signature is valid.')
 	else:
 		print('Signature is invalid.')
-	
+
 	print('Connection closed at', datetime.now())
 	connection.close()
 
-    ## Encrypt logs
+	## Encrypt logs
 	print('\nEncrypting Logs')
 	encryption_result = encrypt_logs(decrypted_file_data)
-    if encryption_result:
+	if encryption_result:
 		encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
-    else:
+	else:
 		print('\nEncryption failed.')
 
 	## Save logs
-    save_log_file(encryption_result)
+	save_log_file(encryption_result)
 	
 
 if __name__ == '__main__':
