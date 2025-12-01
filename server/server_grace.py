@@ -99,12 +99,12 @@ def encrypt_logs(decrypted_file_data):
 	
 	# Load the client's public key to encrypt the AES key###
 	with open('client_public_key.pem', 'rb') as key_file:
-	client_public_key = RSA.import_key(key_file.read())
+		client_public_key = RSA.import_key(key_file.read())
 
 	# Combine all log data into one byte stream
 	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 	
-	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8'), content for filename, content in log_data_list)
+	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in log_data_list))
 
         # Sign the file
 	sig = file_signature(server_private_key, file_data)
@@ -124,10 +124,10 @@ def encrypt_logs(decrypted_file_data):
 
 	return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
 
-def save_log_file(encryption_result)
-        save_folder = 'C:/LOGFILES/'
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = os.path.join(save_folder, current_time + ".txt")
+def save_log_file(encryption_result):
+    save_folder = 'C:/LOGFILES/'
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = os.path.join(save_folder, current_time + ".txt")
 	log_file = open(filename, "x") 
 	with open(filename, "a") as log_file:
 		log_file.write(encryption_result)
@@ -210,13 +210,13 @@ def start_server():
         ## Encrypt logs
 	print('\nEncrypting Logs')
 	encryption_result = encrypt_logs(decrypted_file_data)
-        if encryption_result:
+    if encryption_result:
 		encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
-        else:
+    else:
 		print('\nEncryption failed.')
 
 	## Save logs
-        save_log_file(encryption_result)
+    save_log_file(encryption_result)
 	
 
 if __name__ == '__main__':
