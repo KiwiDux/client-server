@@ -204,10 +204,11 @@ def start_server():
 		print('Signature is valid.')
 	else:
 		print('Signature is invalid.')
+	
 	print('Connection closed at', datetime.now())
 	connection.close()
 
-        ## Encrypt logs
+    ## Encrypt logs
 	print('\nEncrypting Logs')
 	encryption_result = encrypt_logs(decrypted_file_data)
     if encryption_result:
