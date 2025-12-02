@@ -85,11 +85,17 @@ def generate_logs():
 	log_dir = 'LOGS'
 	if not os.path.exists(log_dir):
 		os.makedirs(log_dir)
-
-	logname = (datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+	
+	number = 0
+	logname = 'TEST.txt'
+	# (datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+	while os.path.exists(log_dir + '/' + logname):
+		logname = 'TEST' + str(number) + '.txt'
+		number += 1
+	
 	# New Log
 	try:
-		config = logging.basicConfig(filename = logname , filemode='w')
+		config = logging.basicConfig(filename = log_dir + '/' + logname , filemode='w')
 	except PermissionError:
 		print('Error: Unable to create log file')
 		return log_dir
@@ -102,26 +108,14 @@ def generate_logs():
 	# Clear existing handlers to avoid duplicates
 	if logger.hasHandlers():
 		logger.handlers.clear()
-		
+	
 	logger.addHandler(handler)
 	logger.setLevel(logging.INFO)
 	logger.info('Log created at ', datetime.now().strftime('%d_%H-%M-%S'))
 	
-	# Set log rotation
-	log_handler = RotatingFileHandler(log_dir, '/', 'log_file ', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), '.log', maxBytes=1024*1024, backupCount=20)
-	log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-	log_handler.setLevel(logging.INFO)
-	logger.addHandler(log_handler)
-	
 	# Test logging
 	for i in range(5):
 		logger.info('Log ', str(i))
-		
-	logger.debug('Testing Debug')
-	logger.info('Testing Info')
-	logger.warning('Testing Warning')
-	logger.error('Testing Error')
-	logger.critical('Testing Critical')
 	
 	print('Logs generated.')
 	return log_dir
@@ -197,7 +191,7 @@ def encrypt_logs(log_data_list):
 	# Combine all log data into one byte stream
 	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 	
-	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in log_data_list))
+	file_data = ''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in log_data_list))
 
     # Sign the file
 	sig = file_signature(client_private_key, file_data)
@@ -310,8 +304,8 @@ def main():
 		try:
 			while True:
 				process_log_cycle()
-				print('\nWaiting 2 minutes...')
-				time.sleep(2 * 60)
+				print('\nWaiting 2 seconds...')
+				time.sleep(2)
 		except KeyboardInterrupt:
 			print('\nAuto send stopped by user.')
 		except Exception as error:
