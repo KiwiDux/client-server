@@ -29,15 +29,21 @@ def aes_file_decryption(aes_decrypt_key, encrypted_file_data, tag, nonce):
 
 
 #---------------------------------------------------------
+# Encrypt the AES key with RSA (SHA-512) (stored file)
+#---------------------------------------------------------
+def aes_key_encryption(public_key, aes_encrypt_key):
+	rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
+	key_encrypted = rsa_cipher.encrypt(aes_encrypt_key)
+	return key_encrypted
+
+#---------------------------------------------------------
 # Encrypt recieved log file with AES-256-GCM (stored file)
 #---------------------------------------------------------
-def aes_file_encryption(aes_key, file_data):
-	# rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
-	# key_encrypted = rsa_cipher.encrypt(aes_key)
-
-	aes_encrypt_cipher = AES.new(aes_key, AES.MODE_GCM)  # GCM uses a nonce
+def aes_file_encryption(key_encrypted, file_data):
+	aes_encrypt_cipher = AES.new(key_encrypted, AES.MODE_GCM)  # GCM uses a nonce
 	ciphertext, tag = aes_encrypt_cipher.encrypt_and_digest(file_data)
 	return ciphertext, tag, aes_encrypt_cipher.nonce
+
 
 #---------------------------------------------------------
 # Verify the signature with the client's public key
