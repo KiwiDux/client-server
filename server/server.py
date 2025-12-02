@@ -163,7 +163,7 @@ def start_server():
 	server_ip_input = input("Enter the server IP address: ")
 	server_port_input = input("Enter the server port: ")
 	server_ip = server_ip_input
-	server_port = server_port_input
+	server_port = int(server_port_input)
 	#server_ip = '127.0.0.1'
 	#server_port = 12345
 

@@ -8,6 +8,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Random import get_random_bytes
 from logging.handlers import RotatingFileHandler
+from sys import stdout
 from datetime import datetime
 
 #---------------------------------------------------------
@@ -85,13 +86,15 @@ def generate_logs():
 	if not os.path.exists(log_dir):
 		os.makedirs(log_dir)
 
+	logname = (datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 	# New Log
 	try:
-		handler = logging.FileHandler(log_dir, '/', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), '.log', mode='w')
+		config = logging.basicConfig(filename = logname , filemode='w')
 	except PermissionError:
 		print('Error: Unable to create log file')
 		return log_dir
 	
+	handler = logging.StreamHandler(stdout)
 	# Set log format
 	handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 	logger = logging.getLogger()
@@ -105,7 +108,7 @@ def generate_logs():
 	logger.info('Log created at ', datetime.now().strftime('%d_%H-%M-%S'))
 	
 	# Set log rotation
-	log_handler = RotatingFileHandler(log_dir, '/', 'log_file ', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), '.log', mode='w', maxBytes=1024*1024, backupCount=20)
+	log_handler = RotatingFileHandler(log_dir, '/', 'log_file ', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), '.log', maxBytes=1024*1024, backupCount=20)
 	log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 	log_handler.setLevel(logging.INFO)
 	logger.addHandler(log_handler)
