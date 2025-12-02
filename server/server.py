@@ -1,11 +1,12 @@
 import socket
 import os
+import time
 from Crypto import Random
 from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-import time
+from Crypto.Random import get_random_bytes
 from datetime import datetime
 
 
@@ -14,18 +15,29 @@ from datetime import datetime
 #---------------------------------------------------------
 def aes_key_decryption(private_key, aes_key_encrypted):
 	rsa_cipher = PKCS1_OAEP.new(private_key, hashAlgorithm=SHA512)
-	aes_key = rsa_cipher.decrypt(aes_key_encrypted)
-	return aes_key
+	aes_decrypt_key = rsa_cipher.decrypt(aes_key_encrypted)
+	return aes_decrypt_key
 
 
 #---------------------------------------------------------
 # Decrypt the file using AES
 #---------------------------------------------------------
-def aes_file_decryption(aes_key, encrypted_file_data, tag, nonce):
-	aes_cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
-	decrypted_file_data = aes_cipher.decrypt_and_verify(encrypted_file_data, tag)
+def aes_file_decryption(aes_decrypt_key, encrypted_file_data, tag, nonce):
+	aes_decrypt_cipher = AES.new(aes_decrypt_key, AES.MODE_GCM, nonce=nonce)
+	decrypted_file_data = aes_decrypt_cipher.decrypt_and_verify(encrypted_file_data, tag)
 	return decrypted_file_data
 
+
+#---------------------------------------------------------
+# Encrypt recieved log file with AES-256-GCM (stored file)
+#---------------------------------------------------------
+def aes_file_encryption(aes_key, file_data):
+	# rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
+	# key_encrypted = rsa_cipher.encrypt(aes_key)
+
+	aes_encrypt_cipher = AES.new(aes_key, AES.MODE_GCM)  # GCM uses a nonce
+	ciphertext, tag = aes_encrypt_cipher.encrypt_and_digest(file_data)
+	return ciphertext, tag, aes_encrypt_cipher.nonce
 
 #---------------------------------------------------------
 # Verify the signature with the client's public key
@@ -40,9 +52,10 @@ def sig_verification(public_key, file_data, sig):
 # Receive log file
 #---------------------------------------------------------
 def receive_log_file(connection):
+	private_key = file('server_private_key.pem')
 	# Receive the encrypted AES key
 	aes_key_encrypted = connection.recv(256)  # RSA-encrypted AES key
-	aes_key = aes_key_decryption(server_private_key, aes_key_encrypted)
+	aes_key = aes_key_decryption(private_key, aes_key_encrypted)
 
 	# Receive the length of the encrypted file data
 	file_size = int.from_bytes(connection.recv(4), byteorder='big')
@@ -95,7 +108,7 @@ def encrypt_logs(decrypted_file_data):
 
 	# Load the server's private key to sign the file
 	with open('server_private_key.pem', 'rb') as key_file:
-		server_private_key = RSA.import_key(key_file.read())
+		private_key = RSA.import_key(key_file.read())
 	
 	# Load the client's public key to encrypt the AES key###
 	with open('client_public_key.pem', 'rb') as key_file:
@@ -104,10 +117,13 @@ def encrypt_logs(decrypted_file_data):
 	# Combine all log data into one byte stream
 	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 	
-	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in log_data_list))
+	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in decrypted_file_data))
 
-        # Sign the file
-	sig = file_signature(server_private_key, file_data)
+    # Sign the file
+	sig = sig_verification(private_key, file_data)
+	hashed_object = SHA512.new(file_data)
+	signpkcs = PKCS1_v1_5.new(private_key)
+	sig = signpkcs.sign(hashed_object)
 	print('File signed successfully.')
 
 	# Generate a random AES key for symmetric encryption
@@ -175,10 +191,10 @@ def start_server():
 
 	# Load the server's private key to decrypt the AES key
 	with open('server_private_key.pem', 'rb') as key_file:
-		server_private_key = RSA.import_key(key_file.read())
+		private_key = RSA.import_key(key_file.read())
 
 	# Decrypt the AES key
-	aes_key = aes_key_decryption(server_private_key, aes_key_encrypted)
+	aes_key = aes_key_decryption(private_key, aes_key_encrypted)
 	print('AES key decrypted.', (aes_key))
 
 	# Decrypt the file using the decrypted AES key
