@@ -155,6 +155,7 @@ def save_log_file(encryption_result):
 		log_file.write(encryption_result)
 	log_file.close()
 
+
 ####################################################################################################
 
 
@@ -215,7 +216,7 @@ def start_server():
 	# Save the decrypted file
 	with open('received_file.txt', 'wb') as file:
 		file.write(decrypted_file_data)
-	print('File saved as ', received_file.txt)
+	print('File saved as ', 'received_file.txt')
 
 	# Load the client's public key to verify the signature
 	with open('client_public_key.pem', 'rb') as key_file:
