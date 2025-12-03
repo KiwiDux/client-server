@@ -12,13 +12,14 @@ def generate_logs():
 	# create timestamp variable for filenames
 	timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	number = 0
-	logname = timestamp, '.txt'
+	# build filename as a string, not a tuple
+	logname = timestamp + '.txt'
 	filepath = os.path.join(log_dir, logname)
 
 	# if the filename already exists, add number suffix to the filename
 	while os.path.exists(filepath):
 		number += 1
-		logname = timestamp, '_' + str(number), '.txt'
+		logname = timestamp + '_' + str(number) + '.txt'
 		filepath = os.path.join(log_dir, logname)
 
 	# configure logging to write to the chosen file
@@ -78,7 +79,7 @@ def log_gather(log_dir):
 					log_data_list.append((log_file, content))
 				
 				# Mark as processed
-				file.write(log_file, '\n')
+				file.write(log_file + '\n')
 			except Exception as error:
 				print('Error reading ', log_file, ': ', str(error))
 	
@@ -93,7 +94,7 @@ def process_log_cycle():
 
 	# Gather Logs
 	print('\nGathering Logs')
-	log_data_list = log_gather(gather)
+	log_data_list = log_gather('LOGS')
 
 	if not log_data_list:
 		print('No new logs found to send.')
@@ -104,7 +105,7 @@ def process_log_cycle():
 	
 	else:
 		print('\nConnection failed.')
-
+	
 
 def main():
 	

@@ -91,13 +91,14 @@ def generate_logs():
 	# create timestamp variable for filenames
 	timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	number = 0
-	logname = timestamp, '.txt'
+	# build filename as a string, not a tuple
+	logname = timestamp + '.txt'
 	filepath = os.path.join(log_dir, logname)
 
 	# if the filename already exists, add number suffix to the filename
 	while os.path.exists(filepath):
 		number += 1
-		logname = timestamp, '_' + str(number), '.txt'
+		logname = timestamp + '_' + str(number) + '.txt'
 		filepath = os.path.join(log_dir, logname)
 
 	# configure logging to write to the chosen file
@@ -108,15 +109,12 @@ def generate_logs():
 			level=logging.INFO,
 			format='%(asctime)s - %(levelname)s - %(message)s'
 		)
-		# ensure file is actually created (surface permission errors)
 		open(filepath, 'a').close()
 	except PermissionError:
 		print('Error: Unable to create log file')
 		return None
 	
 	print('Logs generated: ', filepath)
-	log_gather(log_dir)
-	# return the created file path so callers can use it directly
 	return filepath
 
 
@@ -164,7 +162,7 @@ def log_gather(log_dir):
 					log_data_list.append((log_file, content))
 				
 				# Mark as processed
-				file.write(log_file, '\n')
+				file.write(log_file + '\n')
 			except Exception as error:
 				print('Error reading ', log_file, ': ', str(error))
 	
