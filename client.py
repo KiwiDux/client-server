@@ -121,7 +121,7 @@ def generate_logs():
 #---------------------------------------------------------
 # Log Directory scan and collection
 #---------------------------------------------------------
-def log_gather(log_dir):
+def log_gather(filepath):
 	log_data_list = []
 	old_log_list = []
 	log_list = []
@@ -129,12 +129,12 @@ def log_gather(log_dir):
 	tracking_file = 'processed_logs.txt'
 
 	# Ensure LOGS directory exists
-	if not os.path.exists(log_dir):
-		print('Directory ', log_dir, ' not found.')
+	if not os.path.exists('LOGS'):
+		print('Directory ', 'LOGS', ' not found.')
 		return log_data_list
 
 	# Get current list of files in LOGS
-	current_logs = [file for file in os.listdir(log_dir) if os.path.isfile(os.path.join(log_dir, file))]
+	current_logs = [file for file in os.listdir('LOGS') if os.path.isfile(os.path.join('LOGS', file))]
 
 	# Check previously known logs
 	if os.path.exists(tracking_file):
@@ -153,7 +153,7 @@ def log_gather(log_dir):
 	# Process new logs (read content) and update tracking
 	with open(tracking_file, 'a') as file:
 		for log_file in log_list:
-			file_path = os.path.join(log_dir, log_file)
+			file_path = os.path.join('LOGS', log_file)
 			try:
 				# Read as BYTES for encryption
 				with open(file_path, 'rb') as log:
@@ -187,9 +187,14 @@ def encrypt_logs(log_data_list):
 	# Combine all log data into one byte stream
 	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 	
-	file_data = ''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in log_data_list))
+	file_data = bytearray()
+	for filename, content in log_data_list:
+		header = f'\nSTART OF {filename}\n'.encode('utf-8')
+		file_data.extend(header)
+		file_data.extend(content)
+	file_data = bytes(file_data)
 
-    # Sign the file
+	# Sign the file
 	sig = file_signature(client_private_key, file_data)
 	print('File signed successfully.')
 
@@ -212,15 +217,14 @@ def encrypt_logs(log_data_list):
 # Start the client connection
 #---------------------------------------------------------
 def open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
-	# input_serverip = input('Enter the server IP address: ')
-	# input_serverport = input('Enter the server port: ')
-	# server_ip = input_serverip
-	# server_port = int(input_serverport)
+	#input_serverip = input('Enter the server IP address: ')
+	#input_serverport = input('Enter the server port: ')
+	#server_ip = input_serverip
+	#server_port = int(input_serverport)
 	
-	# Hardcoded for testing
 	server_ip = '127.0.0.1'
 	server_port = 12345
-
+	
 	print('Connecting to ', server_ip, ':', server_port, '...')
 
 	# Create a socket and connect to the server
@@ -254,8 +258,7 @@ def open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
 	except KeyboardInterrupt:
 		print('\nAuto send stopped by user.')
 		csocket.close()
-	finally:
-		return
+	return
 
 
 def process_log_cycle():

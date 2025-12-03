@@ -14,7 +14,7 @@ from datetime import datetime
 # Decrypt the AES key with the server's private RSA key
 #---------------------------------------------------------
 def aes_key_decryption(private_key, aes_key_encrypted):
-	rsa_cipher = PKCS1_OAEP.new(private_key, hashAlgorithm=SHA512)
+	rsa_cipher = PKCS1_OAEP.new(private_key, hashAlgo=SHA512)
 	aes_decrypt_key = rsa_cipher.decrypt(aes_key_encrypted)
 	return aes_decrypt_key
 
@@ -58,7 +58,12 @@ def sig_verification(public_key, file_data, sig):
 # Receive log file
 #---------------------------------------------------------
 def receive_log_file(connection):
-	private_key = file('server_private_key.pem')
+	# Load the server private key using a path relative to this script to avoid
+	# problems when the current working directory is different.
+	server_key_path = os.path.join(os.path.dirname(__file__), 'server_private_key.pem')
+	with open(server_key_path, 'rb') as key_file:
+		private_key = RSA.import_key(key_file.read())
+
 	# Receive the encrypted AES key
 	aes_key_encrypted = connection.recv(256)  # RSA-encrypted AES key
 	aes_key = aes_key_decryption(private_key, aes_key_encrypted)
@@ -84,11 +89,13 @@ def receive_log_file(connection):
 		return None
 
 	# Save the decrypted file
-	with open('received_file.txt', 'wb') as file:
+	received_path = os.path.join(os.path.dirname(__file__), 'received_file.txt')
+	with open(received_path, 'wb') as file:
 		file.write(decrypted_file_data)
 
-	# Load the client's public key to verify the signature
-	with open('client_public_key.pem', 'rb') as key_file:
+	# Load the client's public key (use script directory to find file reliably)
+	client_key_path = os.path.join(os.path.dirname(__file__), 'client_public_key.pem')
+	with open(client_key_path, 'rb') as key_file:
 		client_public_key = RSA.import_key(key_file.read())
 
 	# Verify the signature
@@ -112,60 +119,71 @@ def encrypt_logs(decrypted_file_data):
 	if not decrypted_file_data:
 		return None
 
-	# Load the server's private key to sign the file
-	with open('server_private_key.pem', 'rb') as key_file:
+	# Normalize to bytes
+	if not isinstance(decrypted_file_data, (bytes, bytearray)):
+		file_data = str(decrypted_file_data).encode('utf-8')
+	else:
+		file_data = bytes(decrypted_file_data)
+
+	# Load keys
+	server_key_path = os.path.join(os.path.dirname(__file__), 'server_private_key.pem')
+	with open(server_key_path, 'rb') as key_file:
 		private_key = RSA.import_key(key_file.read())
-	
-	# Load the client's public key to encrypt the AES key###
-	with open('client_public_key.pem', 'rb') as key_file:
+
+	client_key_path = os.path.join(os.path.dirname(__file__), 'client_public_key.pem')
+	with open(client_key_path, 'rb') as key_file:
 		client_public_key = RSA.import_key(key_file.read())
 
-	# Combine all log data into one byte stream
-	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
-	
-	file_data = b''.join('\nSTART OF {filename}\n'.encode('utf-8')(content for filename, content in decrypted_file_data))
-
-    # Sign the file
-	sig = sig_verification(private_key, file_data)
+	# Sign the file
 	hashed_object = SHA512.new(file_data)
-	signpkcs = PKCS1_v1_5.new(private_key)
-	sig = signpkcs.sign(hashed_object)
-	print('File signed successfully.')
+	signer = PKCS1_v1_5.new(private_key)
+	sig = signer.sign(hashed_object)
 
-	# Generate a random AES key for symmetric encryption
-	aes_key = get_random_bytes(32)  # AES-256
-	print('AES key generated.')
-	
-	# Encrypt the file with AES-256-GCM
+	# AES key, encrypt file and AES key
+	aes_key = get_random_bytes(32)
 	encrypted_file_data, tag, nonce = aes_file_encryption(aes_key, file_data)
-	print('File encrypted with AES.')
-
-	# Encrypt the AES key with RSA (client's public key)
 	encrypted_aes_key = aes_key_encryption(client_public_key, aes_key)
-	print('AES key encrypted with RSA.')
 
 	return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
 
 def save_log_file(encryption_result):
+	# Ensure folder exists
 	save_folder = 'C:/LOGFILES/'
+	os.makedirs(save_folder, exist_ok=True)
 	current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 	filename = os.path.join(save_folder, current_time + ".txt")
-	log_file = open(filename, "x") 
-	with open(filename, "a") as log_file:
-		log_file.write(encryption_result)
-	log_file.close()
+
+	if not encryption_result:
+		return
+
+	# Expect tuple: (encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
+	try:
+		encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
+	except Exception:
+		with open(filename, 'w', encoding='utf-8') as f:
+			f.write(str(encryption_result))
+			return
+
+	import base64
+
+	with open(filename, 'w', encoding='utf-8') as f:
+		f.write('encrypted_aes_key: ' + base64.b64encode(encrypted_aes_key).decode('ascii') + '\n')
+		f.write('encrypted_file_data: ' + base64.b64encode(encrypted_file_data).decode('ascii') + '\n')
+		f.write('tag: ' + base64.b64encode(tag).decode('ascii') + '\n')
+		f.write('nonce: ' + base64.b64encode(nonce).decode('ascii') + '\n')
+		f.write('sig: ' + base64.b64encode(sig).decode('ascii') + '\n')
 
 
 ####################################################################################################
 
 
 def start_server():
-	server_ip_input = input("Enter the server IP address: ")
-	server_port_input = input("Enter the server port: ")
-	server_ip = server_ip_input
-	server_port = int(server_port_input)
-	#server_ip = '127.0.0.1'
-	#server_port = 12345
+	#server_ip_input = input("Enter the server IP address: ")
+	#server_port_input = input("Enter the server port: ")
+	#server_ip = server_ip_input
+	#server_port = int(server_port_input)
+	server_ip = '127.0.0.1'
+	server_port = 12345
 
 	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	server_socket.bind((server_ip, server_port))  # Bind to any interface
@@ -196,8 +214,9 @@ def start_server():
 	sig = connection.recv(256)  # RSA signature
 	print('Signature received.', (sig))
 
-	# Load the server's private key to decrypt the AES key
-	with open('server_private_key.pem', 'rb') as key_file:
+	# Load the server's private key (path resolved relative to this script file)
+	server_key_path = os.path.join(os.path.dirname(__file__), 'server_private_key.pem')
+	with open(server_key_path, 'rb') as key_file:
 		private_key = RSA.import_key(key_file.read())
 
 	# Decrypt the AES key
@@ -214,12 +233,14 @@ def start_server():
 		return
 
 	# Save the decrypted file
-	with open('received_file.txt', 'wb') as file:
+	received_path = os.path.join(os.path.dirname(__file__), 'received_file.txt')
+	with open(received_path, 'wb') as file:
 		file.write(decrypted_file_data)
-	print('File saved as ', 'received_file.txt')
+	print('File saved as ', received_path)
 
-	# Load the client's public key to verify the signature
-	with open('client_public_key.pem', 'rb') as key_file:
+	# Load the client's public key (path resolved relative to this script file)
+	client_key_path = os.path.join(os.path.dirname(__file__), 'client_public_key.pem')
+	with open(client_key_path, 'rb') as key_file:
 		client_public_key = RSA.import_key(key_file.read())
 
 	# Verify the signature
