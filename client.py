@@ -88,16 +88,16 @@ def generate_logs():
 	# create directory if needed
 	os.makedirs(log_dir, exist_ok=True)
 
-	# create time variable for filenames
-	times = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+	# create timestamp variable for filenames
+	timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	number = 0
-	logname = times + '.txt'
+	logname = timestamp, '.txt'
 	filepath = os.path.join(log_dir, logname)
 
 	# if the filename already exists, add number suffix to the filename
 	while os.path.exists(filepath):
 		number += 1
-		logname = times + '_' + str(number) + '.txt'
+		logname = timestamp, '_' + str(number), '.txt'
 		filepath = os.path.join(log_dir, logname)
 
 	# configure logging to write to the chosen file
@@ -112,10 +112,12 @@ def generate_logs():
 		open(filepath, 'a').close()
 	except PermissionError:
 		print('Error: Unable to create log file')
-		return log_dir
+		return None
 	
-	print('Logs generated.')
-	return log_dir
+	print('Logs generated: ', filepath)
+	log_gather(log_dir)
+	# return the created file path so callers can use it directly
+	return filepath
 
 
 #---------------------------------------------------------
