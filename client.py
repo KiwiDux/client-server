@@ -44,11 +44,13 @@ from datetime import datetime
 # Log report metadata (timestamp, hostname, file name)
 # Secure server IP discovery
 
+
 #---------------------------------------------------------
 # Clear Screen
 #---------------------------------------------------------
 def clear_screen():
     os.system('cls')
+
 
 #---------------------------------------------------------
 # Digital Signature (SHA-512, RSA)
@@ -100,22 +102,7 @@ def generate_logs():
 		print('Error: Unable to create log file')
 		return log_dir
 	
-	handler = logging.StreamHandler(stdout)
-	# Set log format
-	handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-	logger = logging.getLogger()
 	
-	# Clear existing handlers to avoid duplicates
-	if logger.hasHandlers():
-		logger.handlers.clear()
-	
-	logger.addHandler(handler)
-	logger.setLevel(logging.INFO)
-	logger.info('Log created at ', datetime.now().strftime('%d_%H-%M-%S'))
-	
-	# Test logging
-	for i in range(5):
-		logger.info('Log ', str(i))
 	
 	print('Logs generated.')
 	return log_dir
@@ -170,7 +157,6 @@ def log_gather(log_dir):
 				print('Error reading ', log_file, ': ', str(e))
 	
 	return log_data_list
-
 
 
 #---------------------------------------------------------
@@ -265,11 +251,11 @@ def open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
 def process_log_cycle():
 	# Generate Logs
 	print('\nGenerating Logs')
-	log_dir = generate_logs()
+	gather = generate_logs()
 
 	# Gather Logs
 	print('\nGathering Logs')
-	log_data_list = log_gather(log_dir)
+	log_data_list = log_gather(gather)
 
 	if not log_data_list:
 		print('No new logs found to send.')
@@ -313,6 +299,7 @@ def main():
 
 	else:
 		print('Invalid selection!')
+
 
 if __name__ == '__main__':
 	main()
