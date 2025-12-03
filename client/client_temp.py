@@ -39,7 +39,6 @@ def aes_file_encryption(aes_key, file_data):
 	return ciphertext, tag, aes_cipher.nonce
 
 
-'''
 # Logging schedule
 def generate_logs():
 	log_dir = 'LOGS'
@@ -74,7 +73,6 @@ def generate_logs():
 	
 	print('Logs generated: ', filepath)
 	return filepath
-'''
 
 
 # Log Directory scan and collection
