@@ -89,10 +89,10 @@ def generate_logs():
 		os.makedirs(log_dir)
 	
 	number = 0
-	logname = 'TEST.txt'
-	# (datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-	while os.path.exists(log_dir + '/' + logname):
-		logname = 'TEST' + str(number) + '.txt'
+	logname = (time, '.txt')
+	time = (datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+	while os.path.exists(log_dir,  '/',  logname):
+		logname = time, str(number), '.txt'
 		number += 1
 	
 	# New Log
@@ -101,8 +101,6 @@ def generate_logs():
 	except PermissionError:
 		print('Error: Unable to create log file')
 		return log_dir
-	
-	
 	
 	print('Logs generated.')
 	return log_dir
@@ -146,15 +144,15 @@ def log_gather(log_dir):
 			file_path = os.path.join(log_dir, log_file)
 			try:
 				# Read as BYTES for encryption
-				with open(file_path, 'rb') as lf:
-					content = lf.read()
+				with open(file_path, 'rb') as log:
+					content = log.read()
 					# Store filename and content
 					log_data_list.append((log_file, content))
 				
 				# Mark as processed
 				file.write(log_file, '\n')
-			except Exception as e:
-				print('Error reading ', log_file, ': ', str(e))
+			except Exception as error:
+				print('Error reading ', log_file, ': ', str(error))
 	
 	return log_data_list
 
