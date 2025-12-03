@@ -260,6 +260,7 @@ def main():
 	elif menu_select == '2':
 		print('Auto Send started. Press Any Key to stop.')
 		auto_send()
+
 	elif menu_select == '3':
 		print('Exiting program.')
 

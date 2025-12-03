@@ -39,10 +39,9 @@ def aes_file_encryption(aes_key, file_data):
 	return ciphertext, tag, aes_cipher.nonce
 
 
-'''
 # Logging schedule
 def generate_logs():
-	log_dir = 'LOGS'
+	log_dir = read_logs()
 	# create directory if needed
 	os.makedirs(log_dir, exist_ok=True)
 
@@ -74,7 +73,6 @@ def generate_logs():
 	
 	print('Logs generated: ', filepath)
 	return filepath
-'''
 
 
 # Log Directory scan and collection
@@ -89,7 +87,7 @@ def log_gather(filepath):
 	current_logs = read_logs()
 
 	# Get current list of files in LOGS
-	current_logs = [file for file in os.listdir('LOGS') if os.path.isfile(os.path.join('LOGS', file))]
+	current_logs = [file for file in os.listdir(read_logs()) if os.path.isfile(os.path.join(read_logs(), file))]
 
 	# Check previously known logs
 	if os.path.exists(tracking_file):
@@ -108,7 +106,7 @@ def log_gather(filepath):
 	# Process new logs (read content) and update tracking
 	with open(tracking_file, 'a') as file:
 		for log_file in log_list:
-			file_path = os.path.join('LOGS', log_file)
+			file_path = os.path.join(read_logs(), log_file)
 			try:
 				# Read as BYTES for encryption
 				with open(file_path, 'rb') as log:
@@ -262,6 +260,7 @@ def main():
 	elif menu_select == '2':
 		print('Auto Send started. Press Any Key to stop.')
 		auto_send()
+
 	elif menu_select == '3':
 		print('Exiting program.')
 
