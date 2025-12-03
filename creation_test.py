@@ -2,23 +2,33 @@ import os
 import logging
 from datetime import datetime
 
-time = str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-
-def generate_logs(time):
+def generate_logs():
 	log_dir = 'LOGS'
-	if not os.path.exists(log_dir):
-		os.makedirs(log_dir)
-	
+	# create directory if needed
+	os.makedirs(log_dir, exist_ok=True)
+
+	# create time variable for filenames
+	times = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	number = 0
-	logname = (time, '.txt')
-	#time = str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-	while os.path.exists(log_dir,  '/',  logname):
-		logname = time, str(number), '.txt'
+	logname = times + '.txt'
+	filepath = os.path.join(log_dir, logname)
+
+	# if the filename already exists, add number suffix to the filename
+	while os.path.exists(filepath):
 		number += 1
-	
-	# New Log
+		logname = times + '_' + str(number) + '.txt'
+		filepath = os.path.join(log_dir, logname)
+
+	# configure logging to write to the chosen file
 	try:
-		config = logging.basicConfig(filename = log_dir + '/' + logname , filemode='w')
+		logging.basicConfig(
+			filename=filepath,
+			filemode='w',
+			level=logging.INFO,
+			format='%(asctime)s - %(levelname)s - %(message)s'
+		)
+		# ensure file is actually created (surface permission errors)
+		open(filepath, 'a').close()
 	except PermissionError:
 		print('Error: Unable to create log file')
 		return log_dir
@@ -26,4 +36,5 @@ def generate_logs(time):
 	print('Logs generated.')
 	return log_dir
 
-generate_logs()
+if __name__ == '__main__':
+	generate_logs()
