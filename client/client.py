@@ -9,6 +9,16 @@ from datetime import datetime
 
 class Client:
     	
+	def __init__(self):
+		
+		#input_serverip = input('Enter the server IP address: ')
+		#input_serverport = input('Enter the server port: ')
+		#server_ip = input_serverip
+		#server_port = int(input_serverport)
+		
+		self.server_ip = '127.0.0.1'
+		self.server_port = 12345
+			
 	def read_logs(self):
 		with open("/var/log/syslog", "rb") as f:
 			return f.read(self)
@@ -161,21 +171,14 @@ class Client:
 
 
 	# Start the client connection
-	def open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
-		#input_serverip = input('Enter the server IP address: ')
-		#input_serverport = input('Enter the server port: ')
-		#server_ip = input_serverip
-		#server_port = int(input_serverport)
-		
-		server_ip = '127.0.0.1'
-		server_port = 12345
-		
-		print('Connecting to ', server_ip, ':', server_port, '...')
+	def open_socket(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
+				
+		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
 
 		# Create a socket and connect to the server
 		csocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			csocket.connect((server_ip, server_port))
+			csocket.connect((self.server_ip, self.server_port))
 			print('Connection established at', datetime.now())
 
 			# Send encrypted AES key
