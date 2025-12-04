@@ -21,10 +21,10 @@ class Client:
 			
 	def read_logs(self):
 		with open("/var/log/syslog", "rb") as f:
-			return f.read(self)
+			return f.read()
 
 	# Digital Signature (SHA-512, RSA)
-	def file_signature(private_key, file_data):
+	def file_signature(self, private_key, file_data):
 		hashed_object = SHA512.new(file_data)
 		signpkcs = PKCS1_v1_5.new(private_key)
 		sig = signpkcs.sign(hashed_object)
@@ -32,69 +32,33 @@ class Client:
 
 
 	# Encrypt the AES key with RSA (SHA-512)
-	def aes_key_encryption(public_key, aes_key):
+	def aes_key_encryption(self, public_key, aes_key):
 		rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
 		key_encrypted = rsa_cipher.encrypt(aes_key)
 		return key_encrypted
 
 
 	# Encrypt the file with AES-256-GCM
-	def aes_file_encryption(aes_key, file_data):
+	def aes_file_encryption(self, aes_key, file_data):
 		aes_cipher = AES.new(aes_key, AES.MODE_GCM)  # GCM uses a nonce
 		ciphertext, tag = aes_cipher.encrypt_and_digest(file_data)
 		return ciphertext, tag, aes_cipher.nonce
 
 
-	# Logging schedule
-	def generate_logs(self):
-		log_dir = self.read_logs()
-		
-		# create directory if needed
-		os.makedirs(log_dir, exist_ok=True)
-
-		# create timestamp variable for filenames
-		timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-		number = 0
-		# build filename as a string, not a tuple
-		logname = timestamp + '.txt'
-		filepath = os.path.join(log_dir, logname)
-
-		# if the filename already exists, add number suffix to the filename
-		while os.path.exists(filepath):
-			number += 1
-			logname = timestamp + '_' + str(number) + '.txt'
-			filepath = os.path.join(log_dir, logname)
-
-		# configure logging to write to the chosen file
-		try:
-			logging.basicConfig(
-				filename=filepath,
-				filemode='w',
-				level=logging.INFO,
-				format='%(asctime)s - %(levelname)s - %(message)s'
-			)
-			open(filepath, 'a').close()
-		except PermissionError:
-			print('Error: Unable to create log file')
-			return None
-		
-		print('Logs generated: ', filepath)
-		return filepath
-
-
 	# Log Directory scan and collection
-	def log_gather(self, filepath):
+	def log_gather(self, log_dir):
 		log_data_list = []
 		old_log_list = []
 		log_list = []
 		
 		tracking_file = 'processed_logs.txt'
 
-		# directory call back
-		current_logs = self.read_logs()
+		# Use the supplied directory (or resolve from read_logs if None)
+		if not log_dir:
+			log_dir = self.read_logs()
 
-		# Get current list of files in LOGS
-		current_logs = [file for file in os.listdir(self.read_logs()) if os.path.isfile(os.path.join(self.read_logs(), file))]
+		# Get current list of files in the directory
+		current_logs = [file for file in os.listdir(log_dir) if os.path.isfile(os.path.join(log_dir, file))]
 
 		# Check previously known logs
 		if os.path.exists(tracking_file):
@@ -113,7 +77,7 @@ class Client:
 		# Process new logs (read content) and update tracking
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
-				file_path = os.path.join(self.read_logs(), log_file)
+				file_path = os.path.join(log_dir, log_file)
 				try:
 					# Read as BYTES for encryption
 					with open(file_path, 'rb') as log:
