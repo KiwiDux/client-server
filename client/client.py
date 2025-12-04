@@ -174,7 +174,7 @@ class Client:
 
 
 	def process_log_cycle(self):
-
+		
 		# Gather Logs
 		print('\nGathering Logs')
 		log_data_list = self.log_gather()
