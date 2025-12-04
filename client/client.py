@@ -174,13 +174,10 @@ class Client:
 
 
 	def process_log_cycle(self):
-		# Generate Logs
-		print('\nGenerating Logs')
-		gather = self.generate_logs()
 
 		# Gather Logs
 		print('\nGathering Logs')
-		log_data_list = self.log_gather(gather)
+		log_data_list = self.log_gather()
 		if not log_data_list:
 			print('No new logs found to send.')
 			return
