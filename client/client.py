@@ -246,7 +246,7 @@ class Client:
 
 
 def main():
-	client = Client
+	client = Client()
 	print('\n## Program started at', datetime.now(), ' ##')
 	
 	string_menu = '\n1.\tManual Log Send.\n2.\tAuto Log Send.\n\nSelect an option from above: '
