@@ -42,6 +42,7 @@ def aes_file_encryption(aes_key, file_data):
 # Logging schedule
 def generate_logs():
 	log_dir = read_logs()
+	
 	# create directory if needed
 	os.makedirs(log_dir, exist_ok=True)
 
@@ -238,13 +239,16 @@ def process_log_cycle():
 
 
 def auto_send(self):
-        print(" Auto_send started. Logs will be sent at 17:00 every day.")
-        while True:
-            now = datetime.now()
-            if now.hour == 17 and now.minute == 0:
-                print('\n', now.strftime('%H:%M:%S'), ' Scheduled send triggered!')
-                self.send_logs()
-                time.sleep(60)
+	print(" Auto_send started. Logs will be sent at 17:00 every day.")
+	while True:
+		now = datetime.now()
+		if now.hour == 17 and now.minute == 0:
+			print('\n', now.strftime('%H:%M:%S'), ' Scheduled send triggered!')
+			self.send_logs()
+			time.sleep(60)
+		if KeyboardInterrupt:
+			print('\nAuto send stopped by user.')
+			break
 
 
 def main():
@@ -258,7 +262,7 @@ def main():
 		process_log_cycle()
 
 	elif menu_select == '2':
-		print('Auto Send started. Press Any Key to stop.')
+		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
 		auto_send()
 
 	elif menu_select == '3':

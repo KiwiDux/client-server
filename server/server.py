@@ -125,18 +125,17 @@ def encrypt_logs(decrypted_file_data):
 	else:
 		file_data = bytes(decrypted_file_data)
 
-	# Load keys
-	server_key_path = os.path.join(os.path.dirname(__file__), 'server_private_key.pem')
-	with open(server_key_path, 'rb') as key_file:
-		private_key = RSA.import_key(key_file.read())
+	# Load the servers's private key to sign the file
+	with open('server_private_key.pem', 'rb') as key_file:
+		server_private_key = RSA.import_key(key_file.read())
 
-	client_key_path = os.path.join(os.path.dirname(__file__), 'client_public_key.pem')
-	with open(client_key_path, 'rb') as key_file:
+	# Load the server's public key to encrypt the AES key
+	with open('client_public_key.pem', 'rb') as key_file:
 		client_public_key = RSA.import_key(key_file.read())
 
 	# Sign the file
 	hashed_object = SHA512.new(file_data)
-	signer = PKCS1_v1_5.new(private_key)
+	signer = PKCS1_v1_5.new(server_private_key)
 	sig = signer.sign(hashed_object)
 
 	# AES key, encrypt file and AES key
@@ -145,6 +144,7 @@ def encrypt_logs(decrypted_file_data):
 	encrypted_aes_key = aes_key_encryption(client_public_key, aes_key)
 
 	return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
+
 
 def save_log_file(encryption_result):
 	# Ensure folder exists
