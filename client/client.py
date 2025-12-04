@@ -53,12 +53,11 @@ class Client:
 		
 		tracking_file = 'processed_logs.txt'
 
-		# Use the supplied directory (or resolve from read_logs if None)
-		if not read_logs:
-			read_logs = self.read_logs()
+		if not log_dir:
+			log_dir = self.read_logs()
 
 		# Get current list of files in the directory
-		current_logs = [file for file in os.listdir(read_logs) if os.path.isfile(os.path.join(read_logs, file))]
+		current_logs = [file for file in os.listdir(log_dir) if os.path.isfile(os.path.join(log_dir, file))]
 
 		# Check previously known logs
 		if os.path.exists(tracking_file):
@@ -77,7 +76,7 @@ class Client:
 		# Process new logs (read content) and update tracking
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
-				file_path = os.path.join(read_logs, log_file)
+				file_path = os.path.join(log_dir, log_file)
 				try:
 					# Read as BYTES for encryption
 					with open(file_path, 'rb') as log:
