@@ -177,7 +177,7 @@ class Client:
 		
 		# Gather Logs
 		print('\nGathering Logs')
-		log_data_list = self.log_gather()
+		log_data_list = self.log_gather(self.log_dir)
 		if not log_data_list:
 			print('No new logs found to send.')
 			return
