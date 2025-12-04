@@ -18,7 +18,7 @@ def read_logs(self):
 
 
 # Digital Signature (SHA-512, RSA)
-def file_signature(private_key, file_data):
+def file_signature(self, private_key, file_data):
 	hashed_object = SHA512.new(file_data)
 	signpkcs = PKCS1_v1_5.new(private_key)
 	sig = signpkcs.sign(hashed_object)
@@ -26,14 +26,14 @@ def file_signature(private_key, file_data):
 
 
 # Encrypt the AES key with RSA (SHA-512)
-def aes_key_encryption(public_key, aes_key):
+def aes_key_encryption(self, public_key, aes_key):
 	rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
 	key_encrypted = rsa_cipher.encrypt(aes_key)
 	return key_encrypted
 
 
 # Encrypt the file with AES-256-GCM
-def aes_file_encryption(aes_key, file_data):
+def aes_file_encryption(self, aes_key, file_data):
 	aes_cipher = AES.new(aes_key, AES.MODE_GCM)  # GCM uses a nonce
 	ciphertext, tag = aes_cipher.encrypt_and_digest(file_data)
 	return ciphertext, tag, aes_cipher.nonce
@@ -77,7 +77,7 @@ def generate_logs(self):
 
 
 # Log Directory scan and collection
-def log_gather(filepath):
+def log_gather(self, filepath):
 	log_data_list = []
 	old_log_list = []
 	log_list = []
@@ -85,10 +85,10 @@ def log_gather(filepath):
 	tracking_file = 'processed_logs.txt'
 
 	# directory call back
-	current_logs = read_logs()
+	current_logs = self.read_logs()
 
 	# Get current list of files in LOGS
-	current_logs = [file for file in os.listdir(read_logs()) if os.path.isfile(os.path.join(read_logs(), file))]
+	current_logs = [file for file in os.listdir(self.read_logs()) if os.path.isfile(os.path.join(self.read_logs(), file))]
 
 	# Check previously known logs
 	if os.path.exists(tracking_file):
@@ -107,7 +107,7 @@ def log_gather(filepath):
 	# Process new logs (read content) and update tracking
 	with open(tracking_file, 'a') as file:
 		for log_file in log_list:
-			file_path = os.path.join(read_logs(), log_file)
+			file_path = os.path.join(self.read_logs(), log_file)
 			try:
 				# Read as BYTES for encryption
 				with open(file_path, 'rb') as log:
@@ -124,7 +124,7 @@ def log_gather(filepath):
 
 
 # Encrypt, sign logs
-def encrypt_logs(log_data_list):
+def encrypt_logs(self, log_data_list):
 	if not log_data_list:
 		return None
 
@@ -166,7 +166,7 @@ def encrypt_logs(log_data_list):
 
 
 # Start the client connection
-def open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
+def open_socket(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
 	#input_serverip = input('Enter the server IP address: ')
 	#input_serverport = input('Enter the server port: ')
 	#server_ip = input_serverip
@@ -211,15 +211,14 @@ def open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
 	return
 
 
-def process_log_cycle():
+def process_log_cycle(self):
 	# Generate Logs
 	print('\nGenerating Logs')
-	gather = generate_logs()
+	gather = self.generate_logs()
 
 	# Gather Logs
 	print('\nGathering Logs')
-	log_data_list = log_gather(gather)
-
+	log_data_list = self.log_gather(gather)
 	if not log_data_list:
 		print('No new logs found to send.')
 		return
@@ -251,7 +250,7 @@ def auto_send(self):
 			break
 
 
-def main():
+def main(self):
 	
 	print('\n## Program started at', datetime.now(), ' ##')
 	
