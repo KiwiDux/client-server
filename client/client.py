@@ -50,7 +50,9 @@ class Client:
 		log_data_list = []
 		old_log_list = []
 		log_list = []
-		
+
+		log_dir = read_logs()
+
 		tracking_file = 'processed_logs.txt'
 
 		if not log_dir:
