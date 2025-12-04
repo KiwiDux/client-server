@@ -217,7 +217,7 @@ def main():
 	menu_select = input(string_menu)
 
 	if menu_select == '1':
-		client.process_log_cycle(client.self, client.read_logs)
+		client.process_log_cycle(client.read_logs)
 
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
