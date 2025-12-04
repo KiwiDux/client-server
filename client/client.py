@@ -58,21 +58,6 @@ class Client:
 		if not log_dir:
 			log_dir = self.read_logs()
 
-		# Get current list of files in the directory
-		current_logs = [file for file in os.listdir(log_dir) if os.path.isfile(os.path.join(log_dir, file))]
-
-		# Check previously known logs
-		if os.path.exists(tracking_file):
-			with open(tracking_file, 'r') as file:
-				old_log_list = file.read().splitlines()
-		
-		# Check for new logs
-		log_list = [log for log in current_logs if log not in old_log_list]
-
-		if not log_list:
-			print('No new logs found.')
-			return log_data_list
-
 		print('Found ', str(len(log_list)), ' new logs: ', str(log_list))
 
 		# Process new logs (read content) and update tracking
