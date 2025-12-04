@@ -130,12 +130,11 @@ def encrypt_logs(self, log_data_list):
 
 	# Load the client's private key to sign the file
 	with open('client_private_key.pem', 'rb') as key_file:
-		client_private_key = RSA.import_key(key_file.read())
+		client_private_key = self.RSA.import_key(key_file.read())
 	
 	# Load the server's public key to encrypt the AES key
 	with open('server_public_key.pem', 'rb') as key_file:
-		server_public_key = RSA.import_key(key_file.read())
-
+		server_public_key = self.RSA.import_key(key_file.read())
 	# Combine all log data into one byte stream
 	# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 	
@@ -147,7 +146,7 @@ def encrypt_logs(self, log_data_list):
 	file_data = bytes(file_data)
 
 	# Sign the file
-	sig = file_signature(client_private_key, file_data)
+	sig = self.file_signature(client_private_key, file_data)
 	print('File signed successfully.')
 
 	# Generate a random AES key for symmetric encryption
@@ -155,11 +154,11 @@ def encrypt_logs(self, log_data_list):
 	print('AES key generated.')
 	
 	# Encrypt the file with AES-256-GCM
-	encrypted_file_data, tag, nonce = aes_file_encryption(aes_key, file_data)
+	encrypted_file_data, tag, nonce = self.aes_file_encryption(aes_key, file_data)
 	print('File encrypted with AES.')
 
 	# Encrypt the AES key with RSA (server's public key)
-	encrypted_aes_key = aes_key_encryption(server_public_key, aes_key)
+	encrypted_aes_key = self.aes_key_encryption(server_public_key, aes_key)
 	print('AES key encrypted with RSA.')
 
 	return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
@@ -225,7 +224,7 @@ def process_log_cycle(self):
 
 	# Encrypt Logs
 	print('\nEncrypting Logs')
-	encryption_result = encrypt_logs(log_data_list)
+	encryption_result = self.encrypt_logs(log_data_list)
 	
 	if encryption_result:
 		encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
@@ -258,12 +257,11 @@ def main(self):
 	menu_select = input(string_menu)
 
 	if menu_select == '1':
-		process_log_cycle()
+		self.process_log_cycle()
 
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
-		auto_send()
-
+		self.auto_send()
 	elif menu_select == '3':
 		print('Exiting program.')
 
