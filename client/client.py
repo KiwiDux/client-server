@@ -46,7 +46,7 @@ class Client:
 
 
 	# Log Directory scan and collection
-	def log_gather(self, log_dir):
+	def log_gather(self, read_logs):
 		log_data_list = []
 		old_log_list = []
 		log_list = []
@@ -54,11 +54,11 @@ class Client:
 		tracking_file = 'processed_logs.txt'
 
 		# Use the supplied directory (or resolve from read_logs if None)
-		if not log_dir:
-			log_dir = self.read_logs()
+		if not read_logs:
+			read_logs = self.read_logs()
 
 		# Get current list of files in the directory
-		current_logs = [file for file in os.listdir(log_dir) if os.path.isfile(os.path.join(log_dir, file))]
+		current_logs = [file for file in os.listdir(read_logs) if os.path.isfile(os.path.join(read_logs, file))]
 
 		# Check previously known logs
 		if os.path.exists(tracking_file):
@@ -77,7 +77,7 @@ class Client:
 		# Process new logs (read content) and update tracking
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
-				file_path = os.path.join(log_dir, log_file)
+				file_path = os.path.join(read_logs, log_file)
 				try:
 					# Read as BYTES for encryption
 					with open(file_path, 'rb') as log:
@@ -173,11 +173,11 @@ class Client:
 		return
 
 
-	def process_log_cycle(self, log_dir):
+	def process_log_cycle(self, read_logs):
 		
 		# Gather Logs
 		print('\nGathering Logs')
-		log_data_list = self.log_gather(log_dir)
+		log_data_list = self.log_gather(read_logs)
 		if not log_data_list:
 			print('No new logs found to send.')
 			return
@@ -217,7 +217,7 @@ def main():
 	menu_select = input(string_menu)
 
 	if menu_select == '1':
-		client.process_log_cycle(client.log_dir)
+		client.process_log_cycle(client.self, client.read_logs)
 
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
