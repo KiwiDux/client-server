@@ -249,7 +249,7 @@ def auto_send(self):
 			break
 
 
-def main(self):
+def main():
 	
 	print('\n## Program started at', datetime.now(), ' ##')
 	
@@ -257,11 +257,11 @@ def main(self):
 	menu_select = input(string_menu)
 
 	if menu_select == '1':
-		self.process_log_cycle()
+		process_log_cycle()
 
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
-		self.auto_send()
+		auto_send()
 	elif menu_select == '3':
 		print('Exiting program.')
 
