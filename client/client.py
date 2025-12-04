@@ -41,7 +41,7 @@ def aes_file_encryption(aes_key, file_data):
 
 # Logging schedule
 def generate_logs():
-	log_dir = read_logs()
+	log_dir = read_logs(self)
 	
 	# create directory if needed
 	os.makedirs(log_dir, exist_ok=True)
