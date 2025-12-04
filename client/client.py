@@ -14,7 +14,7 @@ def clear_screen():
 
 def read_logs(self):
         with open("/var/log/syslog", "rb") as f:
-            return f.read()
+            return f.read(self)
 
 
 # Digital Signature (SHA-512, RSA)
@@ -40,8 +40,8 @@ def aes_file_encryption(aes_key, file_data):
 
 
 # Logging schedule
-def generate_logs():
-	log_dir = read_logs(self)
+def generate_logs(self):
+	log_dir = self.read_logs()
 	
 	# create directory if needed
 	os.makedirs(log_dir, exist_ok=True)
