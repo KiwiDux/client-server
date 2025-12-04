@@ -246,18 +246,18 @@ class Client:
 
 
 def main():
-	
+	client = Client
 	print('\n## Program started at', datetime.now(), ' ##')
 	
 	string_menu = '\n1.\tManual Log Send.\n2.\tAuto Log Send.\n\nSelect an option from above: '
 	menu_select = input(string_menu)
 
 	if menu_select == '1':
-		process_log_cycle()
+		client.process_log_cycle()
 
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
-		auto_send()
+		client.auto_send()
 	elif menu_select == '3':
 		print('Exiting program.')
 
