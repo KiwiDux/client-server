@@ -210,21 +210,21 @@ def open_socket(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
 	return
 
 
-def process_log_cycle(self):
+def process_log_cycle():
 	# Generate Logs
 	print('\nGenerating Logs')
-	gather = self.generate_logs()
+	gather = generate_logs()
 
 	# Gather Logs
 	print('\nGathering Logs')
-	log_data_list = self.log_gather(gather)
+	log_data_list = log_gather(gather)
 	if not log_data_list:
 		print('No new logs found to send.')
 		return
 
 	# Encrypt Logs
 	print('\nEncrypting Logs')
-	encryption_result = self.encrypt_logs(log_data_list)
+	encryption_result = encrypt_logs(log_data_list)
 	
 	if encryption_result:
 		encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
