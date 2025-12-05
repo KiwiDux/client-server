@@ -11,10 +11,8 @@ class Client:
     	
 	def __init__(self):
 		
-		#input_serverip = input('Enter the server IP address: ')
-		#input_serverport = input('Enter the server port: ')
-		#server_ip = input_serverip
-		#server_port = int(input_serverport)
+		#self.server_ip = input('Enter the server IP address: ')
+		#self.server_port = int(input('Enter the server port: '))
 		
 		self.server_ip = '127.0.0.1'
 		self.server_port = 12345
@@ -48,7 +46,6 @@ class Client:
 	# Log Directory scan and collection
 	def log_gather(self, read_logs):
 		log_data_list = []
-		old_log_list = []
 		log_list = []
 
 		log_dir = read_logs()
@@ -126,26 +123,26 @@ class Client:
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
 
 		# Create a socket and connect to the server
-		csocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			csocket.connect((self.server_ip, self.server_port))
+			client_socket.connect((self.server_ip, self.server_port))
 			print('Connection established at', datetime.now())
 
 			# Send encrypted AES key
-			csocket.sendall(encrypted_aes_key)
+			client_socket.sendall(encrypted_aes_key)
 			print('Encrypted AES key sent.')
 			
 			# Send length of the encrypted file data
-			csocket.sendall(len(encrypted_file_data).to_bytes(4, byteorder='big'))
+			client_socket.sendall(len(encrypted_file_data).to_bytes(4, byteorder='big'))
 			
 			# Send encrypted file data
-			csocket.sendall(encrypted_file_data)
+			client_socket.sendall(encrypted_file_data)
 			print('Encrypted file sent at', datetime.now())
 
 			# Send the tag, nonce, and digital signature for verification
-			csocket.sendall(tag)
-			csocket.sendall(nonce) # Nonce is 16 bytes for AES-GCM
-			csocket.sendall(sig)
+			client_socket.sendall(tag)
+			client_socket.sendall(nonce) # Nonce is 16 bytes for AES-GCM
+			client_socket.sendall(sig)
 
 			print('Signature sent at', datetime.now())
 			
@@ -155,11 +152,13 @@ class Client:
 			print('An error occurred: ', error)
 		except KeyboardInterrupt:
 			print('\nAuto send stopped by user.')
-			csocket.close()
+			client_socket.close()
 		return
 
 
 	def process_log_cycle(self, read_logs):
+		
+		self.__init__()
 		
 		# Gather Logs
 		print('\nGathering Logs')
@@ -208,6 +207,7 @@ def main():
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
 		client.auto_send()
+
 	elif menu_select == '3':
 		print('Exiting program.')
 
