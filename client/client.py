@@ -18,7 +18,7 @@ class Client:
 		self.server_port = 12345
 			
 	def read_logs(self):
-		with open("/var/log/syslog", "rb") as f:
+		with open('/var/log/syslog', 'rb') as f:
 			return f.read()
 
 	# Digital Signature (SHA-512, RSA)
@@ -89,13 +89,13 @@ class Client:
 		with open('server_public_key.pem', 'rb') as key_file:
 			server_public_key = RSA.import_key(key_file.read())
 		# Combine all log data into one byte stream
-		# Format: [Filename Length (4 bytes)][Filename][Content Length (4 bytes)][Content]
 		
 		file_data = bytearray()
 		for filename, content in log_data_list:
 			header = ('\nSTART OF ', filename, '\n').encode('utf-8')
 			file_data.extend(header)
 			file_data.extend(content)
+			file_data.extend(b'\nEND OF ' + filename.encode('utf-8') + b'\n')
 		file_data = bytes(file_data)
 
 		# Sign the file
@@ -182,7 +182,7 @@ class Client:
 
 
 	def auto_send(self):
-		print(" Auto_send started. Logs will be sent at 17:00 every day.")
+		print(' Auto_send started. Logs will be sent at 17:00 every day.')
 		while True:
 			now = datetime.now()
 			if now.hour == 17 and now.minute == 0:

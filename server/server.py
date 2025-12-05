@@ -150,8 +150,8 @@ def save_log_file(encryption_result):
 	# Ensure folder exists
 	save_folder = 'C:/LOGFILES/'
 	os.makedirs(save_folder, exist_ok=True)
-	current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-	filename = os.path.join(save_folder, current_time + ".txt")
+	current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+	filename = os.path.join(save_folder, current_time + '.txt')
 
 	if not encryption_result:
 		return
@@ -178,8 +178,8 @@ def save_log_file(encryption_result):
 
 
 def start_server():
-	#server_ip_input = input("Enter the server IP address: ")
-	#server_port_input = input("Enter the server port: ")
+	#server_ip_input = input('Enter the server IP address: ')
+	#server_port_input = input('Enter the server port: ')
 	#server_ip = server_ip_input
 	#server_port = int(server_port_input)
 	server_ip = '127.0.0.1'
