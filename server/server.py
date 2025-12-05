@@ -146,6 +146,8 @@ def encrypt_logs(decrypted_file_data):
 	return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
 
 
+
+
 def save_log_file(encryption_result):
 	# Ensure folder exists
 	save_folder = 'C:/LOGFILES/'
@@ -174,14 +176,9 @@ def save_log_file(encryption_result):
 		f.write('sig: ' + base64.b64encode(sig).decode('ascii') + '\n')
 
 
-####################################################################################################
-
-
 def start_server():
-	#server_ip_input = input('Enter the server IP address: ')
-	#server_port_input = input('Enter the server port: ')
-	#server_ip = server_ip_input
-	#server_port = int(server_port_input)
+	#server_ip = input('Enter the server IP address: ')
+	#server_port = int(input('Enter the server port: '))
 	server_ip = '127.0.0.1'
 	server_port = 12345
 
