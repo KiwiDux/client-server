@@ -49,7 +49,6 @@ class Client:
 		log_list = []
 
 		log_dir = read_logs()
-
 		tracking_file = 'processed_logs.txt'
 
 		if not log_dir:
@@ -62,6 +61,7 @@ class Client:
 			for log_file in log_list:
 				file_path = os.path.join(log_dir, log_file)
 				try:
+					current_time = datetime.now()#G#
 					# Read as BYTES for encryption
 					with open(file_path, 'rb') as log:
 						content = log.read()
@@ -69,7 +69,7 @@ class Client:
 						log_data_list.append((log_file, content))
 					
 					# Mark as processed
-					file.write(log_file + '\n')
+					file.write(log_file + '\n' + current_time)#G#
 				except Exception as error:
 					print('Error reading ', log_file, ': ', str(error))
 		
@@ -176,7 +176,14 @@ class Client:
 			
 			# Send Logs
 			print('\nSending Logs')
-			self.open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
+			try:
+				if ((encrypted_aes_key == None) or (encrypted_file_data == None) or (tag == None) or (nonce == None) or (sig == None)):
+					print("one of these is empty!")
+				else:
+					self.open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
+			except Exception as e: 
+    			print("something's wrong!")
+			
 		else:
 			print('\nEncryption failed.')
 
