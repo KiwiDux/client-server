@@ -16,10 +16,17 @@ class Client:
 		
 		self.server_ip = '127.0.0.1'
 		self.server_port = 12345
-			
+		
 	def read_logs(self):
-		with open('/var/log/syslog', 'rb') as f:
-			return f.read()
+		###file = 'syslog'
+		##directory = '/var/log'
+		#file_path = os.path.join(directory, file)
+		syslog_list = []
+		with open('var/log/syslog', 'rb') as f:
+			for line in f:
+				syslog_list.append(line)
+		
+		return syslog_list
 
 	# Digital Signature (SHA-512, RSA)
 	def file_signature(self, private_key, file_data):
@@ -181,6 +188,7 @@ class Client:
 					print("one of these is empty!")
 				else:
 					self.open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
+			
 			except Exception as e: 
 				print("something's wrong!")
 			
