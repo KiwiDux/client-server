@@ -81,11 +81,14 @@ class Client:
 				except Exception as error:
 					print('Error reading ', log_file, ': ', str(error))
 		
+		log_data_list = str(log_data_list)
 		return log_data_list
 
 
 	# Encrypt, sign logs
 	def encrypt_logs(self, log_data_list):
+		
+		
 		if not log_data_list:
 			return None
 
