@@ -68,7 +68,7 @@ class Client:
 		# Process new logs (read content) and update tracking
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
-				#file_path = os.path.join(log_dir, log_file)
+				file_path = '/var/log/syslog'
 				try:
 					current_time = datetime.now()#G#
 					# Read as BYTES for encryption
