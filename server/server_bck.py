@@ -1,5 +1,6 @@
 import socket
 import os
+import time
 from Cryptodome import Random
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
@@ -10,6 +11,36 @@ from datetime import datetime
 
 
 class Server:
+
+	# Decrypt the AES key with the server's private RSA key
+	def aes_key_decryption(private_key, aes_key_encrypted):
+		rsa_cipher = PKCS1_OAEP.new(private_key, hashAlgo=SHA512)
+		aes_decrypt_key = rsa_cipher.decrypt(aes_key_encrypted)
+		return aes_decrypt_key
+
+	# Decrypt the file using AES
+	def aes_file_decryption(aes_decrypt_key, encrypted_file_data, tag, nonce):
+		aes_decrypt_cipher = AES.new(aes_decrypt_key, AES.MODE_GCM, nonce=nonce)
+		decrypted_file_data = aes_decrypt_cipher.decrypt_and_verify(encrypted_file_data, tag)
+		return decrypted_file_data
+
+	# Encrypt the AES key with RSA (SHA-512) (stored file)
+	def aes_key_encryption(public_key, aes_encrypt_key):
+		rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
+		key_encrypted = rsa_cipher.encrypt(aes_encrypt_key)
+		return key_encrypted
+
+	# Encrypt recieved log file with AES-256-GCM (stored file)
+	def aes_file_encryption(key_encrypted, file_data):
+		aes_encrypt_cipher = AES.new(key_encrypted, AES.MODE_GCM)  # GCM uses a nonce
+		ciphertext, tag = aes_encrypt_cipher.encrypt_and_digest(file_data)
+		return ciphertext, tag, aes_encrypt_cipher.nonce
+
+	# Verify the signature with the client's public key
+	def sig_verification(public_key, file_data, sig):
+		hashed_object = SHA512.new(file_data)
+		the_verifier = PKCS1_v1_5.new(public_key)
+		return the_verifier.verify(hashed_object, sig)
 
 	def __init__(self):
 		
@@ -148,16 +179,18 @@ class Server:
 	def save_recieved_file(self, encryption_result):
 		
 		# Ensure folder exists
-		save_folder = ('/Desktop/LOGFILES/', self.address)
+		save_folder = '/Desktop/LOGFILES/'
 
 		if not os.path.exists(save_folder):
 			os.makedirs(save_folder, exist_ok=True)
 			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 			filename = os.path.join(save_folder, current_time + '.txt')
 		
+
 		if not encryption_result:
 			return
 		
+
 		# Expect tuple: (encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
 		try:
 			encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
@@ -165,13 +198,17 @@ class Server:
 			with open(filename, 'w', encoding='utf-8') as f:
 				f.write(str(encryption_result))
 				return
-				
+		
+		
+		import base64
+
+
 		with open(filename, 'w', encoding='utf-8') as f:
-			f.write('encrypted_aes_key: ' + (encrypted_aes_key).decode('ascii') + '\n')
-			f.write('encrypted_file_data: ' + (encrypted_file_data).decode('ascii') + '\n')
-			f.write('tag: ' + (tag).decode('ascii') + '\n')
-			f.write('nonce: ' + (nonce).decode('ascii') + '\n')
-			f.write('sig: ' + (sig).decode('ascii'))
+			f.write('encrypted_aes_key: ' + base64.b64encode(encrypted_aes_key).decode('ascii') + '\n')
+			f.write('encrypted_file_data: ' + base64.b64encode(encrypted_file_data).decode('ascii') + '\n')
+			f.write('tag: ' + base64.b64encode(tag).decode('ascii') + '\n')
+			f.write('nonce: ' + base64.b64encode(nonce).decode('ascii') + '\n')
+			f.write('sig: ' + base64.b64encode(sig).decode('ascii') + '\n')
 
 
 
@@ -231,7 +268,7 @@ class Server:
 			decrypted_file_data = self.aes_file_decryption(aes_key, encrypted_file_data, tag, nonce)
 			print('File decrypted successfully.', (decrypted_file_data))
 		except ValueError as e:
-			print('Decryption failed: ', e, e)
+			print(f'Decryption failed: {e}', (e))
 			connection.close()
 			return
 
@@ -271,15 +308,6 @@ class Server:
 
 		## Save logs
 		self.save_recieved_file(encryption_result)
-
-
-	def receive_file(self):
-
-
-		return
-
-
-
 		
 
 if __name__ == '__main__':
