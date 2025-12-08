@@ -26,7 +26,7 @@ class Client:
 			for line in f:
 				syslog_list.append(line)
 		
-		return syslog_list
+		return syslog_list, file_path
 
 	# Digital Signature (SHA-512, RSA)
 	def file_signature(self, private_key, file_data):
@@ -54,7 +54,7 @@ class Client:
 	def log_gather(self, read_logs):
 		log_data_list = []
 
-		log_list = read_logs()
+		log_list, file_path = read_logs()
 		for l in log_list:
 			print(l)
 		tracking_file = 'processed_logs.txt'
@@ -68,7 +68,6 @@ class Client:
 		# Process new logs (read content) and update tracking
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
-				file_path = '/var/log/syslog'
 				try:
 					current_time = datetime.now()#G#
 					# Read as BYTES for encryption
