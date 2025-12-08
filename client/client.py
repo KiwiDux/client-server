@@ -16,13 +16,11 @@ class Client:
 		sig = signpkcs.sign(hashed_object)
 		return sig
 
-
 	# Encrypt the AES key with RSA (SHA-512)
 	def aes_key_encryption(self, public_key, aes_key):
 		rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
 		key_encrypted = rsa_cipher.encrypt(aes_key)
 		return key_encrypted
-
 
 	# Encrypt the file with AES-256-GCM
 	def aes_file_encryption(self, aes_key, file_data):
