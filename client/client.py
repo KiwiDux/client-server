@@ -170,9 +170,9 @@ class Client:
 		# Gather Logs
 		print('\nGathering Logs')
 		log_data_list = self.log_gather(read_logs)
-		if not log_data_list:
-			print('No new logs found to send.')
-			return
+		#if not log_data_list:
+		#	print('No new logs found to send.')
+		#	return
 
 		# Encrypt Logs
 		print('\nEncrypting Logs')
