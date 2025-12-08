@@ -39,7 +39,7 @@ class Client:
 		#self.server_port = 12345
 		
 	
-	def read_logs(self):
+	def read_logs(self): # Read Logs
 		with open('var/log/syslog', 'rb') as f:
 			return f.read()
 
