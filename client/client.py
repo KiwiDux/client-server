@@ -95,7 +95,7 @@ class Client:
 				
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
 		
-		client_public = self.client_public_key.export_key()
+		#client_public = self.client_public_key.export_key()
 		
 		# Create a socket and connect to the server
 		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -103,7 +103,7 @@ class Client:
 			client_socket.connect((self.server_ip, self.server_port))
 			print('Connection established at', datetime.now())
 			
-			client_socket.sendall(client_public)
+			client_socket.sendall(self.client_public_key.export_key())
 			print('Client public key sent.')
 			
 			# Send encrypted AES key
@@ -111,7 +111,7 @@ class Client:
 			print('Encrypted AES key sent.')
 			
 			# Send length of the encrypted file data
-			client_socket.sendall(len(client_public).to_bytes(4, byteorder='big'))
+			client_socket.sendall(len(self.client_public_key.export_key()).to_bytes(4, byteorder='big'))
 			
 			# Send encrypted file data
 			client_socket.sendall(encrypted_file_data)
