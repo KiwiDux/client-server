@@ -56,6 +56,8 @@ class Client:
 		log_list = []
 
 		log_dir = read_logs()
+		for l in log_dir:
+			print(l)
 		tracking_file = 'processed_logs.txt'
 
 		if not log_dir:
