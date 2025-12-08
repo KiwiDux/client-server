@@ -18,11 +18,11 @@ class Client:
 		self.server_port = 12345
 		
 	def read_logs(self):
-		###file = 'syslog'
-		##directory = '/var/log'
-		#file_path = os.path.join(directory, file)
+		file = 'syslog'
+		directory = '/var/log'
+		file_path = os.path.join(directory, file)
 		syslog_list = []
-		with open('var/log/syslog', 'rb') as f:
+		with open(file_path, 'rb') as f:
 			for line in f:
 				syslog_list.append(line)
 		
