@@ -179,8 +179,8 @@ def save_log_file(encryption_result):
 def start_server():
 	#server_ip = input('Enter the server IP address: ')
 	#server_port = int(input('Enter the server port: '))
-	server_ip = '0.0.0.0'
-	server_port = 12345
+	server_ip = '192.168.85.141'
+	server_port = 1234
 
 	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	server_socket.bind((server_ip, server_port))  # Bind to any interface
