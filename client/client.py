@@ -74,14 +74,14 @@ class Client:
 					with open(file_path, 'rb') as log:
 						content = log.read()
 						# Store filename and content
-						log_data_list.append((log_file, content))
+						log_data_list.append((str(log_file), str(content)))
 					
 					# Mark as processed
 					file.write(log_file + '\n' + current_time)
 				except Exception as error:
 					print('Error reading ', log_file, ': ', str(error))
 		
-		log_data_list = str(log_data_list)
+		#log_data_list = str(log_data_list)
 		return log_data_list
 
 
