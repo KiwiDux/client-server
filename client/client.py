@@ -51,9 +51,9 @@ class Client:
 		return file_path
 
 	# Log Directory scan and collection
-	def log_gather(self, read_logs):
+	def log_gather(self, read_logs, file_path):
 		log_data_list = []
-		log_list, file_path = read_logs()
+		log_list = read_logs()
 		tracking_file = 'processed_logs.txt'
 
 		#for l in log_list:
