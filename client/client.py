@@ -100,7 +100,7 @@ class Client:
 		
 		file_data = bytearray()
 		for filename, content in log_data_list:
-			header = ('\nSTART OF ', filename, '\n').encode('utf-8')
+			header = ('\nSTART OF ' + filename + '\n').encode('utf-8')
 			file_data.extend(header)
 			file_data.extend(content)
 			file_data.extend(b'\nEND OF ' + filename.encode('utf-8') + b'\n')
