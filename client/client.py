@@ -64,9 +64,9 @@ class Client:
 			self.client_public_key = RSA.import_key(key_file.read())
 
 	# Encrypt, sign logs
-	def encrypt_logs(self):
+	def encrypt_logs(self, log_file):
 
-		file_data = self.file
+		file_data = log_file
 		
 		self.existing_cprivate()
 		self.existing_spublic()
