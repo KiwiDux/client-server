@@ -99,6 +99,7 @@ class Client:
 		# Combine all log data into one byte stream
 		
 		file_data = log_data_list
+		print(log_data_list)
 		for filename, content in log_data_list:
 			header = ('\nSTART OF ' + str(filename) + '\n').encode('utf-8')
 			file_data.extend(header)
