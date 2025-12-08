@@ -182,7 +182,7 @@ class Client:
 				else:
 					self.open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
 			except Exception as e: 
-    			print("something's wrong!")
+				print("something's wrong!")
 			
 		else:
 			print('\nEncryption failed.')
