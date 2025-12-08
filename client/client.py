@@ -33,10 +33,10 @@ class Client:
 	
 	def __init__(self):
 		
-		self.server_ip = input('Enter the server IP address: ')
-		self.server_port = int(input('Enter the server port: '))
-		#self.server_ip = '127.0.0.1'
-		#self.server_port = 12345
+		#self.server_ip = input('Enter the server IP address: ')
+		#self.server_port = int(input('Enter the server port: '))
+		self.server_ip = '192.168.85.141'
+		self.server_port = 1234
 		
 	
 	def read_logs(self): # Read Logs
