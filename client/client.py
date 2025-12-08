@@ -9,25 +9,6 @@ from datetime import datetime
 
 class Client:
     	
-	def __init__(self):
-		
-		#self.server_ip = input('Enter the server IP address: ')
-		#self.server_port = int(input('Enter the server port: '))
-		
-		self.server_ip = '127.0.0.1'
-		self.server_port = 12345
-		
-	def read_logs(self):
-		file = 'syslog'
-		directory = '/var/log'
-		file_path = os.path.join(directory, file)
-		syslog_list = []
-		with open(file_path, 'rb') as f:
-			for line in f:
-				syslog_list.append(line)
-		
-		return syslog_list, file_path
-
 	# Digital Signature (SHA-512, RSA)
 	def file_signature(self, private_key, file_data):
 		hashed_object = SHA512.new(file_data)
@@ -49,15 +30,34 @@ class Client:
 		ciphertext, tag = aes_cipher.encrypt_and_digest(file_data)
 		return ciphertext, tag, aes_cipher.nonce
 
+	
+	def __init__(self):
+		
+		#self.server_ip = input('Enter the server IP address: ')
+		#self.server_port = int(input('Enter the server port: '))
+		self.server_ip = '127.0.0.1'
+		self.server_port = 12345
+		
+	
+	def read_logs(self):
+		file = 'syslog'
+		directory = '/var/log'
+		file_path = os.path.join(directory, file)
+		syslog_list = []
+		#with open(file_path, 'rb') as f:
+		#	for line in f:
+		#		syslog_list.append(line)
+
+		return file_path
 
 	# Log Directory scan and collection
 	def log_gather(self, read_logs):
 		log_data_list = []
-
 		log_list, file_path = read_logs()
+		tracking_file = 'processed_logs.txt'
+
 		#for l in log_list:
 		#	print(l)
-		tracking_file = 'processed_logs.txt'
 
 		if not log_list:
 			#print("not log list")
@@ -69,26 +69,25 @@ class Client:
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
 				try:
-					current_time = datetime.now()#G#
+					current_time = datetime.now()
 					# Read as BYTES for encryption
-					with open(file_path, 'rb') as log:
-						content = log.read()
+					with open(file_path, 'rb') as pro:
+						content = pro.read()
 						# Store filename and content
-						log_data_list.append((str(log_file), str(content)))
+						log_data_list.append((log_file, content))
+
 					
-					# Mark as processed
 					file.write(log_file + '\n' + current_time)
 				except Exception as error:
 					print('Error reading ', log_file, ': ', str(error))
 		
-		#log_data_list = str(log_data_list)
+
 		return log_data_list
 
 
 	# Encrypt, sign logs
 	def encrypt_logs(self, log_data_list):
-		
-		
+		file_data = log_data_list
 		if not log_data_list:
 			return None
 
@@ -100,14 +99,6 @@ class Client:
 		with open('server_public_key.pem', 'rb') as key_file:
 			server_public_key = RSA.import_key(key_file.read())
 		# Combine all log data into one byte stream
-		
-		file_data = log_data_list
-		print(log_data_list)
-		for filename, content in log_data_list:
-			header = ('\nSTART OF ' + str(filename) + '\n').encode('utf-8')
-			file_data.extend(header)
-			file_data.extend(content)
-			file_data.extend(('\nEND OF ' + str(filename) + '\n').encode('utf-8'))
 
 		# Sign the file
 		sig = self.file_signature(client_private_key, file_data)
