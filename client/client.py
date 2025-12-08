@@ -50,6 +50,7 @@ class Client:
 
 		return file_path
 
+
 	# Encrypt, sign logs
 	def encrypt_logs(self, log_data_list):
 
@@ -127,16 +128,9 @@ class Client:
 		
 		self.__init__()
 		
-		# Gather Logs
-		print('\nGathering Logs')
-		log_data_list = self.log_gather(read_logs)
-		#if not log_data_list:
-		#	print('No new logs found to send.')
-		#	return
-
 		# Encrypt Logs
 		print('\nEncrypting Logs')
-		encryption_result = self.encrypt_logs(log_data_list)
+		encryption_result = self.encrypt_logs(read_logs())
 		
 		if encryption_result:
 			encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
