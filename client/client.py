@@ -77,7 +77,7 @@ class Client:
 						log_data_list.append((log_file, content))
 					
 					# Mark as processed
-					file.write(log_file + '\n' + current_time)#G#
+					file.write(log_file + '\n' + current_time)
 				except Exception as error:
 					print('Error reading ', log_file, ': ', str(error))
 		
@@ -100,10 +100,10 @@ class Client:
 		
 		file_data = log_data_list
 		for filename, content in log_data_list:
-			header = ('\nSTART OF ' + filename + '\n').encode('utf-8')
+			header = ('\nSTART OF ' + str(filename) + '\n').encode('utf-8')
 			file_data.extend(header)
 			file_data.extend(content)
-			file_data.extend(('\nEND OF ' + filename + '\n').encode('utf-8'))
+			file_data.extend(('\nEND OF ' + str(filename) + '\n').encode('utf-8'))
 
 		# Sign the file
 		sig = self.file_signature(client_private_key, file_data)
