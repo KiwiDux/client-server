@@ -59,6 +59,7 @@ class Client:
 		tracking_file = 'processed_logs.txt'
 
 		if not log_dir:
+			print("not log dir")
 			log_dir = self.read_logs()
 
 		print('Found ', str(len(log_list)), ' new logs: ', str(log_list))
