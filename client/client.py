@@ -40,7 +40,7 @@ class Client:
 		
 	
 	def read_logs(self): # Read Logs
-		with open('var/log/syslog', 'rb') as f:
+		with open('/var/log/syslog', 'rb') as f:
 			return f.read()
 
 	def key_generation(self):
