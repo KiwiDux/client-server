@@ -53,23 +53,22 @@ class Client:
 	# Log Directory scan and collection
 	def log_gather(self, read_logs):
 		log_data_list = []
-		log_list = []
 
-		log_dir = read_logs()
-		for l in log_dir:
+		log_list = read_logs()
+		for l in log_list:
 			print(l)
 		tracking_file = 'processed_logs.txt'
 
-		if not log_dir:
-			#print("not log dir")
-			log_dir = self.read_logs()
+		if not log_list:
+			#print("not log list")
+			log_list = self.read_logs()
 
 		print('Found ', str(len(log_list)), ' new logs: ', str(log_list))
 
 		# Process new logs (read content) and update tracking
 		with open(tracking_file, 'a') as file:
 			for log_file in log_list:
-				file_path = os.path.join(log_dir, log_file)
+				#file_path = os.path.join(log_dir, log_file)
 				try:
 					current_time = datetime.now()#G#
 					# Read as BYTES for encryption
