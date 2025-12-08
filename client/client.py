@@ -33,41 +33,46 @@ class Client:
 	
 	def __init__(self):
 		
-		#self.server_ip = input('Enter the server IP address: ')
-		#self.server_port = int(input('Enter the server port: '))
-		self.server_ip = '127.0.0.1'
-		self.server_port = 12345
+		self.server_ip = input('Enter the server IP address: ')
+		self.server_port = int(input('Enter the server port: '))
+		#self.server_ip = '127.0.0.1'
+		#self.server_port = 12345
 		
 	
 	def read_logs(self):
-		file = 'syslog'
-		directory = '/var/log'
-		file_path = os.path.join(directory, file)
-		syslog_list = []
-		#with open(file_path, 'rb') as f:
-		#	for line in f:
-		#		syslog_list.append(line)
+		with open('var/log/syslog', 'rb') as f:
+			return f.read()
 
-		return file_path
+	def key_generation(self):
+		if not os.path.exists('client_private_key.pem'):
+			key = RSA.generate(2048)
+			open('client_private_key.pem', 'wb').write(key.export_key())
+			open('client_public_key.pem', 'wb').write(key.publickey().export_key())
+			print('Keys generated.')
 
+	def	existing_cprivate(self):
+		self.key_generation()
+		with open('client_private_key.pem', 'rb') as key_file:
+			self.client_private_key = RSA.import_key(key_file.read())
+
+	def existing_spublic(self):
+		with open('server_public_key.pem', 'rb') as key_file:
+			self.server_public_key = RSA.import_key(key_file.read())
+
+	def existing_cpublic(self):
+		with open('client_public_key.pem', 'rb') as key_file:
+			self.client_public_key = RSA.import_key(key_file.read())
 
 	# Encrypt, sign logs
-	def encrypt_logs(self, log_data_list):
+	def encrypt_logs(self):
 
-		file_data = log_data_list
-		if not log_data_list:
-			return None
-
-		# Load the client's private key to sign the file
-		with open('client_private_key.pem', 'rb') as key_file:
-			client_private_key = RSA.import_key(key_file.read())
+		file_data = self.file
 		
-		# Load the server's public key to encrypt the AES key
-		with open('server_public_key.pem', 'rb') as key_file:
-			server_public_key = RSA.import_key(key_file.read())
+		self.existing_cprivate()
+		self.existing_spublic()
 
 		# Sign the file
-		sig = self.file_signature(client_private_key, file_data)
+		sig = self.file_signature(self.client_private_key, file_data)
 		print('File signed successfully.')
 
 		# Generate a random AES key for symmetric encryption
@@ -79,7 +84,7 @@ class Client:
 		print('File encrypted with AES.')
 
 		# Encrypt the AES key with RSA (server's public key)
-		encrypted_aes_key = self.aes_key_encryption(server_public_key, aes_key)
+		encrypted_aes_key = self.aes_key_encryption(self.server_public_key, aes_key)
 		print('AES key encrypted with RSA.')
 
 		return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
@@ -89,19 +94,24 @@ class Client:
 	def open_socket(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
 				
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
-
+		
+		client_public = self.client_public_key.export_key()
+		
 		# Create a socket and connect to the server
 		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			client_socket.connect((self.server_ip, self.server_port))
 			print('Connection established at', datetime.now())
-
+			
+			client_socket.sendall(client_public)
+			print('Client public key sent.')
+			
 			# Send encrypted AES key
 			client_socket.sendall(encrypted_aes_key)
 			print('Encrypted AES key sent.')
 			
 			# Send length of the encrypted file data
-			client_socket.sendall(len(encrypted_file_data).to_bytes(4, byteorder='big'))
+			client_socket.sendall(len(client_public).to_bytes(4, byteorder='big'))
 			
 			# Send encrypted file data
 			client_socket.sendall(encrypted_file_data)
@@ -124,13 +134,15 @@ class Client:
 		return
 
 
-	def process_log_cycle(self, read_logs):
+	def start_sequence(self):
 		
 		self.__init__()
+
+		log_file = self.read_logs()
 		
 		# Encrypt Logs
 		print('\nEncrypting Logs')
-		encryption_result = self.encrypt_logs(read_logs())
+		encryption_result = self.encrypt_logs(log_file)
 		
 		if encryption_result:
 			encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
@@ -156,7 +168,7 @@ class Client:
 			now = datetime.now()
 			if now.hour == 17 and now.minute == 0:
 				print('\n', now.strftime('%H:%M:%S'), ' Scheduled send triggered!')
-				self.send_logs()
+				self.start_sequence()
 				time.sleep(60)
 			if KeyboardInterrupt:
 				print('\nAuto send stopped by user.')
@@ -167,11 +179,11 @@ def main():
 	client = Client()
 	print('\n## Program started at', datetime.now(), ' ##')
 	
-	string_menu = '\n1.\tManual Log Send.\n2.\tAuto Log Send.\n\nSelect an option from above: '
+	string_menu = '\n1.\tManual Log Send.\n2.\tAuto Log Send at 17:00.\n\nSelect an option from above: '
 	menu_select = input(string_menu)
 
 	if menu_select == '1':
-		client.process_log_cycle(client.read_logs)
+		client.start_sequence()
 
 	elif menu_select == '2':
 		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
