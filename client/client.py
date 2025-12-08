@@ -50,43 +50,9 @@ class Client:
 
 		return file_path
 
-	# Log Directory scan and collection
-	def log_gather(self, read_logs, file_path):
-		log_data_list = []
-		log_list = read_logs()
-		tracking_file = 'processed_logs.txt'
-
-		#for l in log_list:
-		#	print(l)
-
-		if not log_list:
-			#print("not log list")
-			log_list = self.read_logs()
-
-		print('Found ', str(len(log_list)), ' new logs: ', str(log_list))
-
-		# Process new logs (read content) and update tracking
-		with open(tracking_file, 'a') as file:
-			for log_file in log_list:
-				try:
-					current_time = datetime.now()
-					# Read as BYTES for encryption
-					with open(file_path, 'rb') as pro:
-						content = pro.read()
-						# Store filename and content
-						log_data_list.append((log_file, content))
-
-					
-					file.write(log_file + '\n' + current_time)
-				except Exception as error:
-					print('Error reading ', log_file, ': ', str(error))
-		
-
-		return log_data_list
-
-
 	# Encrypt, sign logs
 	def encrypt_logs(self, log_data_list):
+
 		file_data = log_data_list
 		if not log_data_list:
 			return None
@@ -98,7 +64,6 @@ class Client:
 		# Load the server's public key to encrypt the AES key
 		with open('server_public_key.pem', 'rb') as key_file:
 			server_public_key = RSA.import_key(key_file.read())
-		# Combine all log data into one byte stream
 
 		# Sign the file
 		sig = self.file_signature(client_private_key, file_data)
