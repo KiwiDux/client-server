@@ -179,7 +179,7 @@ def save_log_file(encryption_result):
 def start_server():
 	#server_ip = input('Enter the server IP address: ')
 	#server_port = int(input('Enter the server port: '))
-	server_ip = '127.0.0.1'
+	server_ip = '0.0.0.0'
 	server_port = 12345
 
 	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
