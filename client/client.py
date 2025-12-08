@@ -98,13 +98,12 @@ class Client:
 			server_public_key = RSA.import_key(key_file.read())
 		# Combine all log data into one byte stream
 		
-		file_data = bytearray()
+		file_data = log_data_list
 		for filename, content in log_data_list:
-			header = (b'\nSTART OF ' + filename.encode('utf-8') + b'\n')
+			header = ('\nSTART OF ' + filename + '\n').encode('utf-8')
 			file_data.extend(header)
 			file_data.extend(content)
-			file_data.extend(b'\nEND OF ' + filename.encode('utf-8') + b'\n')
-		file_data = bytes(file_data)
+			file_data.extend(('\nEND OF ' + filename + '\n').encode('utf-8'))
 
 		# Sign the file
 		sig = self.file_signature(client_private_key, file_data)
