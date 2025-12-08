@@ -1,12 +1,12 @@
 import socket
 import os
 import time
-from Crypto import Random
-from Crypto.Cipher import PKCS1_OAEP, AES
-from Crypto.Hash import SHA512
-from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Random import get_random_bytes
+from Cryptodome import Random
+from Cryptodome.Cipher import PKCS1_OAEP, AES
+from Cryptodome.Hash import SHA512
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Signature import PKCS1_v1_5
+from Cryptodome.Random import get_random_bytes
 from datetime import datetime
 
 
