@@ -34,9 +34,9 @@ class Server:
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
 
 
-	def client_public(self, connection):
-		client_pub_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
-		client_pub = self.receive_exact(connection, client_pub_len)
+	def client_public(self, sock):
+		client_pub_len = struct.unpack('>I', self.receive_exact(sock, 4))[0]
+		client_pub = self.receive_exact(sock, client_pub_len)
 		self.client_pub = RSA.import_key(client_pub)
 		print('Client public key received')
 	
@@ -123,7 +123,7 @@ class Server:
 	def order(self, address, connection):
 		self.__init__()
 		self.existing_server_key()
-		self.client_public(connection)
+		self.client_public()
 		self.main_belt(address, connection)
 		
 def start():
