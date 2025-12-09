@@ -21,7 +21,8 @@ class Server:
 		if not os.path.exists('server_private_key.pem'):
 			key = RSA.generate(2048)
 			open('server_private_key.pem', 'wb').write(key.export_key())
-		if not os.path.exists('server_private_key.pem'):
+		
+		if not os.path.exists('server_public_key.pem'):
 			key = RSA.generate(2048)
 			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
 		
@@ -39,14 +40,12 @@ class Server:
 		self.client_pub = RSA.import_key(client_pub)
 		print('Client public key received')
 	
-
 	def decrypt_aes(self):
 		return PKCS1_OAEP.new(self.server_private_key).decrypt(self.aes_key)
 		 
 	def received(self, sock):
 		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
 		return self.receive_exact(sock, length)
-
 
 	def receive_exact(self, connection, length):
 		data = b''
@@ -130,14 +129,13 @@ class Server:
 	def start(self):
 		self.existing_server_key(self)
 		print('Connection closed at', datetime.now())
-		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		server_socket.bind((self.ip, self.port))  # Bind to any interface
-		server_socket.listen(1)
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.bind((self.ip, self.port))  # Bind to any interface
+		s.listen(1)
 		print('Server is listening on ', self.ip, ':', self.port)
 		while True:
-			connection = server_socket.accept()
-			address = server_socket.accept()
-			self.order(connection, address)
+			connection, address = s.accept()
+			self.order(address, connection)
 		
 
 if __name__ == '__main__':
