@@ -12,15 +12,17 @@ class Server:
 		
 		#self.ip = input('Enter the order IP address: ')
 		#self.port = int(input('Enter the order port: '))
-		self.ip = '192.168.85.141'
+		self.ip = '127.0.0.1'
 		self.port = 1234
+		return
 
 
 	def key_generation(self):
 		if not os.path.exists('server_private_key.pem'):
 			key = RSA.generate(2048)
 			open('server_private_key.pem', 'wb').write(key.export_key())
-		if not os.path.exists('server_private_key.pem'):
+		
+		if not os.path.exists('server_public_key.pem'):
 			key = RSA.generate(2048)
 			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
 		
@@ -28,24 +30,22 @@ class Server:
 
 
 	def	existing_server_key(self):
-		self.key_generation(self)
-		self.server_private_key = RSA.import_key(open("server_private_key.pem", "rb").read())
-		self.server_public_key = RSA.import_key(open("server_public_key.pem", "rb").read())
+		self.key_generation()
+		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
+
 
 	def client_public(self, connection):
-		client_pub_len = struct.unpack(">I", self.receive_exact(connection, 4))[0]
+		client_pub_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
 		client_pub = self.receive_exact(connection, client_pub_len)
 		self.client_pub = RSA.import_key(client_pub)
-		print("Client public key received")
+		print('Client public key received')
 	
-
 	def decrypt_aes(self):
 		return PKCS1_OAEP.new(self.server_private_key).decrypt(self.aes_key)
 		 
 	def received(self, sock):
-		length = struct.unpack(">I", self.receive_exact(sock, 4))[0]
+		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
 		return self.receive_exact(sock, length)
-
 
 	def receive_exact(self, connection, length):
 		data = b''
@@ -88,7 +88,7 @@ class Server:
 				print('Signature is invalid.')
 
 
-			with open("received_file.txt", "wb") as f:
+			with open('received_file.txt', 'wb') as f:
 				f.write(self.decrypted_file)
 		
 		except Exception as e:
@@ -125,19 +125,20 @@ class Server:
 		self.existing_server_key(self)
 		self.client_public(self, connection)
 		self.main_belt(self, address, connection)
-	
-	def start(self):
-		self.existing_server_key(self)
-		print('Connection closed at', datetime.now())
-		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		server_socket.bind((self.ip, self.port))  # Bind to any interface
-		server_socket.listen(1)
-		print('Server is listening on ',self.ip, ':', self.port)
-		while True:
-			connection = server_socket.accept()
-			address = server_socket.accept()
-			self.order(connection, address)
 		
+def start():
+	server = Server()
+	server.existing_server_key()
+	print('Connection closed at', datetime.now())
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.bind((server.ip, server.port))  # Bind to any interface
+	s.listen(1)
+	print('Server is listening on', server.ip, ':', server.port)
+	while True:
+		connection, address = s.accept()
+		server.order(address, connection)
 
+	
+		
 if __name__ == '__main__':
-	Server.start(Server)
+	start()
