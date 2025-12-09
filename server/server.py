@@ -1,11 +1,9 @@
 import socket
 import os
-from Cryptodome import Random
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
-from Cryptodome.Random import get_random_bytes
 from datetime import datetime
 
 
@@ -13,10 +11,11 @@ class Server:
 
 	def __init__(self):
 		
-		#self.server_ip = input('Enter the server IP address: ')
-		#self.server_port = int(input('Enter the server port: '))
-		self.server_ip = '192.168.85.141'
-		self.server_port = 1234
+		#self.ip = input('Enter the server IP address: ')
+		#self.port = int(input('Enter the server port: '))
+		self.ip = '192.168.85.141'
+		self.port = 1234
+
 
 	def key_generation(self):
 		if not os.path.exists('server_private_key.pem'):
@@ -26,261 +25,133 @@ class Server:
 			print('Keys generated.')
 
 
-	def	existing_sprivate(self):
+	def	existing_server_key(self):
 		self.key_generation()
-		with open('server_private_key.pem', 'rb') as key_file:
-			self.client_private_key = RSA.import_key(key_file.read())
+		self.server_private_key = RSA.import_key(open("server_private_key.pem", "rb").read())
+		self.server_public_key = RSA.import_key(open("server_public_key.pem", "rb").read())
 
 
 	def existing_cpublic(self):
-		with open('client_public_key.pem', 'rb') as key_file:
-			self.client_public_key = RSA.import_key(key_file.read())
+		self.client_public_key = RSA.import_key(open("client_public_key.pem", "rb").read())
+
 	
+	def decrypt_aes(self):
+		return PKCS1_OAEP.new(self.server_private_key).decrypt(self.aes_key)
+		 
 
-	def existing_spublic(self):
-		with open('server_public_key.pem', 'rb') as key_file:
-			self.server_public_key = RSA.import_key(key_file.read())
-	
+	def verify(self, signature, decrypted_file):
+		hash = SHA512.new(decrypted_file)
+		return PKCS1_v1_5.new(self.client_public_key).verify(hash, signature)
+		
 
+	def decrypt_file(self, aes_key, encrypted_file, tag, nonce):
+		cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
+		return cipher.decrypt_and_verify(encrypted_file, tag)
+		
 
-	# Receive log file
 	def receive_log_file(self, connection):
 
-		server_key_path = os.path.join(os.path.dirname(__file__), 'server_private_key.pem')
-		with open(server_key_path, 'rb') as key_file:
-			private_key = RSA.import_key(key_file.read())
-
-
-		# Receive the encrypted AES key
-		aes_key_encrypted = connection.recv(256)  # RSA-encrypted AES key
-		aes_key = self.aes_key_decryption(private_key, aes_key_encrypted)
-
-
 		# Receive the length of the encrypted file data
-		file_size = int.from_bytes(connection.recv(4), byteorder='big')
+		self.file_size = int.from_bytes(connection.recv(4), byteorder='big')
 
+		encrypted_key = self.receive(connection)
+		encrypted_file = self.receive(connection)
+		tag = self.connection.recv(16)
+		nonce = self.connection.recv(16)
+		signature = self.connection.recv(256)
+		aes_key = self.decrypt_aes(encrypted_key)
+		decrypted_file = self.decrypt_file(aes_key, encrypted_file, tag, nonce)
+
+
+		self.aes_file_decryption = (self.aes_key, encrypted_file, tag, nonce)
+
+		if self.verify(decrypted_file, signature):
+			print('Signature is valid.')
+
+		else:
+			print('Signature is invalid.')
 
 		# Receive the encrypted file data
-		encrypted_file_data = b''
-		while len(encrypted_file_data) < file_size:
-			encrypted_file_data += connection.recv(file_size - len(encrypted_file_data))
-
-
-		# Receive the AES tag, nonce, and signature
-		tag = connection.recv(16)  # AES-GCM tag
-		nonce = connection.recv(16)  # AES-GCM nonce (must be 16 bytes)
-		sig = connection.recv(256)  # RSA signature
-
-
-		# Decrypt the file using the decrypted AES key
-		try:
-			decrypted_file_data = self.aes_file_decryption(aes_key, encrypted_file_data, tag, nonce)
-		except ValueError as e:
-			print('Decryption failed:', e)
-			return None
-
+		self.encrypted_file = b''
+		while len(encrypted_file) < self.file_size:
+			encrypted_file += connection.recv(self.file_size - len(encrypted_file))
 
 		# Save the decrypted file
 		received_path = os.path.join(os.path.dirname(__file__), 'received_file.txt')
 		with open(received_path, 'wb') as file:
-			file.write(decrypted_file_data)
-
-
-		# Load the client's public key (use script directory to find file reliably)
-		client_key_path = os.path.join(os.path.dirname(__file__), 'client_public_key.pem')
-		with open(client_key_path, 'rb') as key_file:
-			client_public_key = RSA.import_key(key_file.read())
-
-
-		# Verify the signature
-		if self.sig_verification(client_public_key, decrypted_file_data, sig):
-			print('Signature is valid.')
-		else:
-			print('Signature is invalid.')
-
-
-		return decrypted_file_data
-
-
-	
-	# Store log report securely (as an encrypted file) 
-
-	# AES-256 key must be 32 bytes long
-	#aes_key = os.urandom(32) # Randomly generate a key (securely store this in practice)
-
-	def encrypt_stored_file(self, decrypted_file_data):
-		if not decrypted_file_data:
-			return None
-
-
-		# Normalize to bytes
-		if not isinstance(decrypted_file_data, (bytes, bytearray)):
-			file_data = str(decrypted_file_data).encode('utf-8')
-		else:
-			file_data = bytes(decrypted_file_data)
-
-
-		# Load the servers's private key to sign the file
-		self.existing_sprivate()
-
-
-		# Load the server's public key to encrypt the AES key
-		with open('client_public_key.pem', 'rb') as key_file:
-			client_public_key = RSA.import_key(key_file.read())
-
-
-		# Sign the file
-		hashed_object = SHA512.new(file_data)
-		signer = PKCS1_v1_5.new(self.server_private_key)
-		sig = signer.sign(hashed_object)
-
-
-		# AES key, encrypt file and AES key
-		aes_key = get_random_bytes(32)
-		encrypted_file_data, tag, nonce = self.aes_file_encryption(aes_key, file_data)
-		encrypted_aes_key = self.aes_key_encryption(client_public_key, aes_key)
-
-
-		return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
+			file.write(self.decrypted_file_data)
 
 
 
-	def save_recieved_file(self, encryption_result):
+	def save_recieved_file(self, address):
 		
 		# Ensure folder exists
-		save_folder = ('/Desktop/LOGFILES/', self.address)
+		save_folder = ('/Desktop/LOGFILES/', address)
 
 		if not os.path.exists(save_folder):
 			os.makedirs(save_folder, exist_ok=True)
 			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 			filename = os.path.join(save_folder, current_time + '.txt')
-		
-		if not encryption_result:
-			return
-		
-		# Expect tuple: (encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
-		try:
-			encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
-		except Exception:
-			with open(filename, 'w', encoding='utf-8') as f:
-				f.write(str(encryption_result))
-				return
-				
+
+		import base64	
+
 		with open(filename, 'w', encoding='utf-8') as f:
-			f.write('encrypted_aes_key: ' + (encrypted_aes_key).decode('ascii') + '\n')
-			f.write('encrypted_file_data: ' + (encrypted_file_data).decode('ascii') + '\n')
-			f.write('tag: ' + (tag).decode('ascii') + '\n')
-			f.write('nonce: ' + (nonce).decode('ascii') + '\n')
-			f.write('sig: ' + (sig).decode('ascii'))
+			f.write('encrypted_aes_key: ' + (self.encrypted_aes_key).decode(base64) + '\n')
+			f.write('encrypted_file: ' + (self.encrypted_file).decode(base64) + '\n')
+			f.write('tag: ' + (self.tag).decode(base64) + '\n')
+			f.write('nonce: ' + (self.nonce).decode(base64) + '\n')
+			f.write('signature: ' + (self.signature).decode(base64))
+
+		with open("received_file.txt", "wb") as f:
+			f.write(self.decrypted_file_data)
 
 
 
-	def start_server(self,):
+	def server(self, tag, nonce, signature):
 		
-
 		self.__init__()
 
-
-		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		server_socket.bind((self.server_ip, self.server_port))  # Bind to any interface
-		server_socket.listen(1)
-		print('Server is listening on port', self.server_port)
-		connection, address = server_socket.accept()
-		print('Connection from', (address))
-		print('Connection established at', datetime.now())
-
-
 		# Receive the encrypted AES key
-		aes_key_encrypted = connection.recv(256)  # RSA-encrypted AES key
+		aes_key_encrypted = self.connection.recv(256)  # RSA-encrypted AES key
 		print('Encrypted AES key received.', (aes_key_encrypted))
 
-
-		# Receive the length of the encrypted file data
-		file_size = int.from_bytes(connection.recv(4), byteorder='big')
-
-
-		# Receive the encrypted file data
-		encrypted_file_data = b''
-		while len(encrypted_file_data) < file_size:
-			encrypted_file_data += connection.recv(file_size - len(encrypted_file_data))
-		print('Encrypted file data received:', (encrypted_file_data))
-
-
-		# Receive the AES tag, nonce, and signature
-		tag = connection.recv(16)  # AES-GCM tag
-		print('Tag:', (tag))
-		nonce = connection.recv(16)  # AES-GCM nonce (must be 16 bytes)
-		print('Nonce:', (nonce))
-		sig = connection.recv(256)  # RSA signature
-		print('Signature received.', (sig))
-
-
 		# Load the server's private key (path resolved relative to this script file)
-		server_key_path = os.path.join(os.path.dirname(__file__), 'server_private_key.pem')
+		server_key_path = self.server_private_key
 		with open(server_key_path, 'rb') as key_file:
-			private_key = RSA.import_key(key_file.read())
-
-
-		# Decrypt the AES key
-		aes_key = self.aes_key_decryption(private_key, aes_key_encrypted)
-		print('AES key decrypted.', (aes_key))
-
+			self.server_private_key = RSA.import_key(key_file.read())
+		
 
 		# Decrypt the file using the decrypted AES key
 		try:
-			decrypted_file_data = self.aes_file_decryption(aes_key, encrypted_file_data, tag, nonce)
-			print('File decrypted successfully.', (decrypted_file_data))
+			self.decrypted_file_data = self.aes_file_decryption(self.aes_key, self.encrypted_file, tag, nonce)
+			print('File decrypted successfully.', (self.decrypted_file_data))
 		except ValueError as e:
 			print('Decryption failed: ', e, e)
-			connection.close()
+			self.connection.close()
 			return
 
+		# Load the client's public key
+		self.existing_cpublic()
 
-		# Save the decrypted file
-		received_path = os.path.join(os.path.dirname(__file__), 'received_file.txt')
-		with open(received_path, 'wb') as file:
-			file.write(decrypted_file_data)
-		print('File saved as ', received_path)
-
-
-		# Load the client's public key (path resolved relative to this script file)
-		client_key_path = os.path.join(os.path.dirname(__file__), 'client_public_key.pem')
-		with open(client_key_path, 'rb') as key_file:
-			client_public_key = RSA.import_key(key_file.read())
-
-
-		# Verify the signature
-		if self.sig_verification(client_public_key, decrypted_file_data, sig):
-			print('Signature is valid.')
-		else:
-			print('Signature is invalid.')
-
-
+	
+	def start(self):
+		self.existing_server_key()
 		print('Connection closed at', datetime.now())
-		connection.close()
-
-
-		## Encrypt logs
-		print('\nEncrypting Logs')
-		encryption_result = self.encrypt_stored_file(decrypted_file_data)
-		if encryption_result:
-			self.encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
-		else:
-			print('\nEncryption failed.')
-
-
-		## Save logs
-		self.save_recieved_file(encryption_result)
-
-
-	def receive_file(self):
-
-
-		return
+		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		server_socket.bind((self.ip, self.port))  # Bind to any interface
+		server_socket.listen(1)
+		print('Server is listening on ',self.ip, ':', self.port)
+		while True:
+			self.connection = server_socket.accept()
+			self.address = server_socket.accept()
+			print('Connection from', (self.address))
+			print('Connection established at', datetime.now())
+			self.server()
+		
 
 
 
 		
 
 if __name__ == '__main__':
-	Server.start_server()
+	Server.start()
