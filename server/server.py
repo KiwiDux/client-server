@@ -20,8 +20,11 @@ class Server:
 		if not os.path.exists('server_private_key.pem'):
 			key = RSA.generate(2048)
 			open('server_private_key.pem', 'wb').write(key.export_key())
+		if not os.path.exists('server_private_key.pem'):
+			key = RSA.generate(2048)
 			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
-			print('Keys generated.')
+		
+		print('Keys generated.')
 
 
 	def	existing_server_key(self):
