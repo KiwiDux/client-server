@@ -127,15 +127,16 @@ class Server:
 		self.main_belt(self, address, connection)
 		
 def start():
-	Server.existing_server_key(Server)
+	server = Server()
+	server.existing_server_key()
 	print('Connection closed at', datetime.now())
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind((Server.ip, Server.port))  # Bind to any interface
+	s.bind((server.ip, server.port))  # Bind to any interface
 	s.listen(1)
-	print('Server is listening on ', Server.ip, ':', Server.port)
+	print('Server is listening on ', server.ip, ':', server.port)
 	while True:
 		connection, address = s.accept()
-		Server.order(Server, address, connection)
+		server.order(address, connection)
 
 	
 		
