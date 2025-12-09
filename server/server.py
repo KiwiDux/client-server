@@ -121,10 +121,10 @@ class Server:
 
 
 	def order(self, address, connection):
-		self.__init__(self)
-		self.existing_server_key(self)
-		self.client_public(self, connection)
-		self.main_belt(self, address, connection)
+		self.__init__()
+		self.existing_server_key()
+		self.client_public(connection)
+		self.main_belt(address, connection)
 		
 def start():
 	server = Server()
