@@ -140,4 +140,4 @@ class Server:
 	
 		
 if __name__ == '__main__':
-	start()
+	Server.start()
