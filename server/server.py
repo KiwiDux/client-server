@@ -29,21 +29,21 @@ class Server:
 
 	def	existing_server_key(self):
 		self.key_generation(self)
-		self.server_private_key = RSA.import_key(open("server_private_key.pem", "rb").read())
-		self.server_public_key = RSA.import_key(open("server_public_key.pem", "rb").read())
+		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
+
 
 	def client_public(self, connection):
-		client_pub_len = struct.unpack(">I", self.receive_exact(connection, 4))[0]
+		client_pub_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
 		client_pub = self.receive_exact(connection, client_pub_len)
 		self.client_pub = RSA.import_key(client_pub)
-		print("Client public key received")
+		print('Client public key received')
 	
 
 	def decrypt_aes(self):
 		return PKCS1_OAEP.new(self.server_private_key).decrypt(self.aes_key)
 		 
 	def received(self, sock):
-		length = struct.unpack(">I", self.receive_exact(sock, 4))[0]
+		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
 		return self.receive_exact(sock, length)
 
 
@@ -88,7 +88,7 @@ class Server:
 				print('Signature is invalid.')
 
 
-			with open("received_file.txt", "wb") as f:
+			with open('received_file.txt', 'wb') as f:
 				f.write(self.decrypted_file)
 		
 		except Exception as e:
