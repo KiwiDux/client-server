@@ -136,9 +136,5 @@ class Server:
 			self.order(connection, address)
 		
 
-
-
-		
-
 if __name__ == '__main__':
-	Server.start()
+	Server.start(Server)
