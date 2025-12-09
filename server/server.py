@@ -25,7 +25,7 @@ class Server:
 
 
 	def	existing_server_key(self):
-		self.key_generation()
+		self.key_generation(self)
 		self.server_private_key = RSA.import_key(open("server_private_key.pem", "rb").read())
 		self.server_public_key = RSA.import_key(open("server_public_key.pem", "rb").read())
 
@@ -63,7 +63,7 @@ class Server:
 		return cipher.decrypt_and_verify(encrypted_file, tag)
 		
 
-	def main_belt(self,address, connection):
+	def main_belt(self, address, connection):
 		print('Connection from', (address))
 		print('Connection established at', datetime.now())
 		try:
@@ -91,7 +91,7 @@ class Server:
 		except Exception as e:
 			print('Error:', e)
 		
-		self.save_recieved_file(self, address)
+		self.save_recieved_file(address)
 
 		return
 
@@ -118,13 +118,13 @@ class Server:
 
 
 	def order(self, address, connection):
-		self.__init__(self)
-		self.existing_server_key(self)
-		self.client_public(self, connection)
-		self.main_belt(self, address, connection)
+		self.__init__()
+		self.existing_server_key()
+		self.client_public(connection)
+		self.main_belt(address, connection)
 	
 	def start(self):
-		self.existing_server_key(self)
+		self.existing_server_key()
 		print('Connection closed at', datetime.now())
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.bind((self.ip, self.port))  # Bind to any interface
