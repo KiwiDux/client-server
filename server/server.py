@@ -128,15 +128,12 @@ class Server:
 		self.main_belt(self, address, connection)
 	
 	def start(self):
-		ip, port = ''
-		self.ip = ip
-		self.port = port
 		self.existing_server_key(self)
 		print('Connection closed at', datetime.now())
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		server_socket.bind((ip, port))  # Bind to any interface
+		server_socket.bind((self.ip, self.port))  # Bind to any interface
 		server_socket.listen(1)
-		print('Server is listening on ', ip, ':', port)
+		print('Server is listening on ', self.ip, ':', self.port)
 		while True:
 			connection = server_socket.accept()
 			address = server_socket.accept()
