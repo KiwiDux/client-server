@@ -125,18 +125,19 @@ class Server:
 		self.existing_server_key(self)
 		self.client_public(self, connection)
 		self.main_belt(self, address, connection)
-	
-	def start(self):
-		self.existing_server_key(self)
-		print('Connection closed at', datetime.now())
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.bind((self.ip, self.port))  # Bind to any interface
-		s.listen(1)
-		print('Server is listening on ', self.ip, ':', self.port)
-		while True:
-			connection, address = s.accept()
-			self.order(address, connection)
 		
+def start():
+	Server.existing_server_key(Server)
+	print('Connection closed at', datetime.now())
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.bind((Server.ip, Server.port))  # Bind to any interface
+	s.listen(1)
+	print('Server is listening on ', Server.ip, ':', Server.port)
+	while True:
+		connection, address = s.accept()
+		Server.order(Server, address, connection)
 
+	
+		
 if __name__ == '__main__':
-	Server.start()
+	start()
