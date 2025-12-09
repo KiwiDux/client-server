@@ -91,7 +91,7 @@ class Server:
 		except Exception as e:
 			print('Error:', e)
 		
-		self.save_recieved_file(address)
+		self.save_recieved_file(self, address)
 
 		return
 
@@ -118,13 +118,13 @@ class Server:
 
 
 	def order(self, address, connection):
-		self.__init__()
-		self.existing_server_key()
-		self.client_public(connection)
-		self.main_belt(address, connection)
+		self.__init__(self)
+		self.existing_server_key(self)
+		self.client_public(self, connection)
+		self.main_belt(self, address, connection)
 	
 	def start(self):
-		self.existing_server_key()
+		self.existing_server_key(self)
 		print('Connection closed at', datetime.now())
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.bind((self.ip, self.port))  # Bind to any interface
