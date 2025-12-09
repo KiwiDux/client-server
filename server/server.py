@@ -12,9 +12,9 @@ class Server:
 		
 		#self.ip = input('Enter the order IP address: ')
 		#self.port = int(input('Enter the order port: '))
-		ip = '192.168.85.141'
-		port = 1234
-		return ip, port
+		self.ip = '192.168.85.141'
+		self.port = 1234
+		return
 
 
 	def key_generation(self):
@@ -127,7 +127,10 @@ class Server:
 		self.client_public(self, connection)
 		self.main_belt(self, address, connection)
 	
-	def start(self, ip, port):
+	def start(self):
+		ip, port = ''
+		self.ip = ip
+		self.port = port
 		self.existing_server_key(self)
 		print('Connection closed at', datetime.now())
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -141,4 +144,4 @@ class Server:
 		
 
 if __name__ == '__main__':
-	Server.start(Server, Server.ip, Server.port)
+	Server.start(Server)
