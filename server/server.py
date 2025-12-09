@@ -54,7 +54,7 @@ class Server:
 			if not packet:
 				raise ConnectionError('Connection closed')
 			data += packet
-		return data
+		return data, sock
 	
 	def verify(self, signature, data):
 		hash = SHA512.new(data)
@@ -126,17 +126,16 @@ class Server:
 		self.client_public(sock)
 		self.main_belt(address, connection)
 		
-def start():
-	server = Server()
-	server.existing_server_key()
-	print('Connection closed at', datetime.now())
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind((server.ip, server.port))  # Bind to any interface
-	s.listen(1)
-	print('Server is listening on', server.ip, ':', server.port)
-	while True:
-		connection, address = s.accept()
-		server.order(address, connection)
+	def start(self):
+		self.existing_server_key()
+		print('Connection opened at', datetime.now())
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.bind((self.ip, self.port))  # Bind to any interface
+		s.listen(1)
+		print('Server is listening on', self.ip, ':', self.port)
+		while True:
+			connection, address = s.accept()
+			self.order(address, connection)
 
 	
 		
