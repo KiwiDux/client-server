@@ -47,10 +47,10 @@ class Server:
 		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
 		return self.receive_exact(sock, length)
 
-	def receive_exact(self, connection, length):
+	def receive_exact(self, sock, length):
 		data = b''
 		while len(data) < length:
-			packet = connection.recv(length - len(data))
+			packet = sock.recv(length - len(data))
 			if not packet:
 				raise ConnectionError('Connection closed')
 			data += packet
