@@ -133,7 +133,7 @@ def start():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.bind((server.ip, server.port))  # Bind to any interface
 	s.listen(1)
-	print('Server is listening on ', server.ip, ':', server.port)
+	print('Server is listening on', server.ip, ':', server.port)
 	while True:
 		connection, address = s.accept()
 		server.order(address, connection)
