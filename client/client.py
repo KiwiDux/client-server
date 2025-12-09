@@ -96,7 +96,7 @@ class Client:
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
 		
 		#client_public = self.client_public_key.export_key()
-		
+		self.existing_cpublic()
 		# Create a socket and connect to the server
 		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
