@@ -12,7 +12,7 @@ class Server:
 		
 		#self.ip = input('Enter the order IP address: ')
 		#self.port = int(input('Enter the order port: '))
-		self.ip = '192.168.85.141'
+		self.ip = '127.0.0.1'
 		self.port = 1234
 		return
 
