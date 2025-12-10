@@ -70,9 +70,8 @@ class Server:
 			tag = self.received(connection)
 			nonce = self.received(connection)
 			signature = self.received(connection)
-
-			self.aes_key = self.decrypt_aes(encrypted_key)
-			decrypted_file = self.decrypt_file(self.aes_key, encrypted_file, tag, nonce)
+			aes_key = self.decrypt_aes(encrypted_key)
+			decrypted_file = self.decrypt_file(aes_key, encrypted_file, tag, nonce)
 
 			print("Decrypted file:\n", decrypted_file.decode())
 
