@@ -65,7 +65,7 @@ class Server:
 			self.client_public_key = RSA.import_key(receive_cpk)
 			print('Client public key received')
 
-			encrypted_key = self.received(connection)  # RSA-encrypted AES key
+			encrypted_key = self.received(connection) # RSA-encrypted AES key
 			encrypted_file = self.received(connection)
 			tag = self.received(connection)
 			nonce = self.received(connection)

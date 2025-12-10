@@ -98,8 +98,8 @@ class Client:
 			print('\nAuto send stopped by user.')
 			self.client_socket.close()
 
-	# Start the client connection
 	def send_logs(self):
+		"""Start the client connection"""
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
 		try:
 			self.load_keys()
