@@ -103,13 +103,25 @@ class Server:
 	def save_recieved_file(self, address):
 		
 		# Ensure folder exists
-		save_folder = ('/Desktop/server/LOGFILES/')
-		save_file = ('/Desktop/server/LOGFILES/' + str((address)[1]))
+		#save_folder = ('/Desktop/server/LOGFILES/')
+		save_file = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/' + str((address)[1]))
+		filename = (str((address)[1]) + '_received_file')
+		#if not os.path.exists(save_folder):
+		#	os.makedirs(save_folder, exist_ok=True)
+		#	current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+		#	filename = os.path.join(save_file, current_time + '.txt')
 
-		if not os.path.exists(save_folder):
-			os.makedirs(save_folder, exist_ok=True)
-			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-			filename = os.path.join(save_file, current_time + '.txt')
+		try:
+			if os.path.exists(save_file):
+
+				os.chmod(save_file, 0o666)
+				print('File permissions changed successfully.')
+			else:
+				print('File does not exist to change permissions.')
+		except PermissionError:
+			print('Permission denied: Unable to change file permissions.')
+		
+		
 
 		import base64
 
