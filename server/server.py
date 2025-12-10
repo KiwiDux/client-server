@@ -95,15 +95,15 @@ class Server:
 			print('Error:', e)
 		
 		# Ensure folder exists
-		save_folder = ('/Desktop/server/LOGFILES/')
+		save_folder = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/')
 		save_file = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/' + str((address)[1]))
 		filename = (str((address)[1]) + '_received_file')
 
 		try:
 			if os.path.exists(save_file):
+				print('file permissions to allow writing.')
+				return
 
-				os.chmod(save_file, 0o666)
-				print('File permissions changed successfully.')
 			else:
 				print('File does not exist to change permissions.')
 		except PermissionError:
