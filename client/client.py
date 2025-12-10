@@ -35,7 +35,7 @@ class Client:
 		
 		#self.server_ip = input('Enter the server IP address: ')
 		#self.server_port = int(input('Enter the server port: '))
-		self.server_ip = '127.0.0.1'
+		self.server_ip = '192.168.200.4'
 		self.server_port = 1234
 		
 	
@@ -63,15 +63,6 @@ class Client:
 		with open('client_public_key.pem', 'rb') as key_file:
 			self.client_public_key = RSA.import_key(key_file.read())
 
-	def receive_exact(self, sock, length):
-		data = b""
-		while len(data) < length:
-			chunk = sock.recv(length - len(data))
-			if not chunk:
-				raise ConnectionError("Socket closed")
-			data += chunk
-		return data
-
 	# Encrypt, sign logs
 	def encrypt_logs(self, log_file):
 
@@ -98,43 +89,17 @@ class Client:
 
 		return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
 
-
-	# Start the client connection
-	def open_socket(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
-				
-		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
-		
-		#client_public = self.client_public_key.export_key()
-		self.existing_cpublic()
-		# Create a socket and connect to the server
-		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	def open_socket(self):
+		self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			client_socket.connect((self.server_ip, self.server_port))
+			self.client_socket.connect((self.server_ip, self.server_port))
 			print('Connection established at', datetime.now())
 			
-			client_socket.sendall(self.client_public_key.export_key())
+			self.client_socket.sendall(self.client_public_key.export_key())
 			print('Client public key sent.')
 			
-			# Send encrypted AES key
-			client_socket.sendall(encrypted_aes_key)
-			print('Encrypted AES key sent.')
-			
-			# Send length of the encrypted file data
-			client_socket.sendall(len(self.client_public_key.export_key()).to_bytes(4, byteorder='big'))
-			
-			# Send encrypted file data
-			client_socket.sendall(encrypted_file_data)
-			print('Encrypted file sent at', datetime.now())
-
-			# Send the tag, nonce, and digital signature for verification
-			client_socket.sendall(tag)
-			client_socket.sendall(nonce) # Nonce is 16 bytes for AES-GCM
-			client_socket.sendall(sig)
-
-			print('Signature sent at', datetime.now())
-			
-			server_key_len = struct.unpack(">I", client_socket.recv(4))[0]
-			server_key_bytes = self.receive_exact(client_socket, server_key_len)
+			server_key = struct.unpack(">I", self.client_socket.recv(4))[0]
+			server_key_bytes = self.client_socket.recv(server_key)
 			self.server_public_key = RSA.import_key(server_key_bytes)
 			print("Received server public key")
 		
@@ -144,7 +109,38 @@ class Client:
 			print('An error occurred: ', error)
 		except KeyboardInterrupt:
 			print('\nAuto send stopped by user.')
-			client_socket.close()
+			self.client_socket.close()
+
+
+	# Start the client connection
+	def send_them(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
+		
+		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
+		
+		self.existing_cpublic()
+		try:
+			
+			# Send encrypted AES key
+			self.client_socket.sendall(encrypted_aes_key)
+			print('Encrypted AES key sent.')
+			
+			# Send length of the encrypted file data
+			self.client_socket.sendall(len(self.client_public_key.export_key()).to_bytes(4, byteorder='big'))
+			
+			# Send encrypted file data
+			self.client_socket.sendall(encrypted_file_data)
+			print('Encrypted file sent at', datetime.now())
+
+			# Send the tag, nonce, and digital signature for verification
+			self.client_socket.sendall(tag)
+			self.client_socket.sendall(nonce) # Nonce is 16 bytes for AES-GCM
+			self.client_socket.sendall(sig)
+
+			print('Signature sent at', datetime.now())	
+
+		except Exception as e:
+			print('Error during sending:', e)
+
 		return
 
 
@@ -154,26 +150,18 @@ class Client:
 
 		log_file = self.read_logs()
 		
-		# Encrypt Logs
+		self.open_socket()
+
+
 		print('\nEncrypting Logs')
 		encryption_result = self.encrypt_logs(log_file)
 		
 		if encryption_result:
 			encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
-			
-			# Send Logs
 			print('\nSending Logs')
-			try:
-				if ((encrypted_aes_key == None) or (encrypted_file_data == None) or (tag == None) or (nonce == None) or (sig == None)):
-					print("one of these is empty!")
-				else:
-					self.open_socket(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
-			
-			except Exception as e: 
-				print("something's wrong!", e)
-			
-		else:
-			print('\nEncryption failed.')
+			self.send_them(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
+
+
 
 
 	def auto_send(self):
