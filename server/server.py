@@ -114,7 +114,7 @@ class Server:
 		except Exception as e:
 			print('Error:', e)
 		
-		self.save_recieved_file(self, address)
+		self.save_recieved_file(address)
 
 		return
 
