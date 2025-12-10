@@ -72,13 +72,13 @@ class Server:
 			self.client_public_key = RSA.import_key(receive_cpk)
 			print('Client public key received')
 
-			self.encrypted_key = self.received(connection)  # RSA-encrypted AES key
-			self.encrypted_file = self.received(connection)
-			self.tag = self.received(connection)
-			self.nonce = self.received(connection)
-			self.signature = self.received(connection)
+			encrypted_key = self.received(connection)  # RSA-encrypted AES key
+			encrypted_file = self.received(connection)
+			tag = self.received(connection)
+			nonce = self.received(connection)
+			signature = self.received(connection)
 
-			self.aes_key = self.decrypt_aes(self.encrypted_key)
+			self.aes_key = self.decrypt_aes(encrypted_key)
 			self.decrypted_file = self.decrypt_file(self.aes_key, self.encrypted_file, self.tag, self.nonce)
 
 			aes_file_decryption = (self.aes_key, self.encrypted_file, self.tag, self.nonce)
@@ -96,20 +96,16 @@ class Server:
 		except Exception as e:
 			print('Error:', e)
 		
-		self.save_recieved_file(address)
+		self.save_recieved_file(address, encrypted_key, encrypted_file, tag, nonce, signature)
 
-		return
+		return encrypted_key, encrypted_file, tag, nonce, signature
 
-	def save_recieved_file(self, address):
+	def save_recieved_file(self, address, encrypted_key, encrypted_file, tag, nonce, signature):
 		
 		# Ensure folder exists
-		#save_folder = ('/Desktop/server/LOGFILES/')
+		save_folder = ('/Desktop/server/LOGFILES/')
 		save_file = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/' + str((address)[1]))
 		filename = (str((address)[1]) + '_received_file')
-		#if not os.path.exists(save_folder):
-		#	os.makedirs(save_folder, exist_ok=True)
-		#	current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-		#	filename = os.path.join(save_file, current_time + '.txt')
 
 		try:
 			if os.path.exists(save_file):
@@ -120,17 +116,21 @@ class Server:
 				print('File does not exist to change permissions.')
 		except PermissionError:
 			print('Permission denied: Unable to change file permissions.')
-		
-		
+
+		if not os.path.exists(save_folder):
+			os.makedirs(save_folder, exist_ok=True)
+			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+			filename = os.path.join(save_file, current_time + '.txt')
+
 
 		import base64
 
 		with open(filename, 'w', encoding='utf-8') as f:
-			f.write('encrypted_aes_key: ' + (self.encrypted_key).decode(base64) + '\n')
-			f.write('encrypted_file: ' + (self.encrypted_file).decode(base64) + '\n')
-			f.write('tag: ' + (self.tag).decode(base64) + '\n')
-			f.write('nonce: ' + (self.nonce).decode(base64) + '\n')
-			f.write('signature: ' + (self.signature).decode(base64))
+			f.write('encrypted_aes_key: ' + (encrypted_key).decode(base64) + '\n')
+			f.write('encrypted_file: ' + (encrypted_file).decode(base64) + '\n')
+			f.write('tag: ' + (tag).decode(base64) + '\n')
+			f.write('nonce: ' + (nonce).decode(base64) + '\n')
+			f.write('signature: ' + (signature).decode(base64))
 
 	#def order(self, address, connection):
 	#	self.__init__()
