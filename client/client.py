@@ -158,6 +158,8 @@ class Client:
 				print('\n', now.strftime('%H:%M:%S'), ' Scheduled send triggered!')
 				self.send_logs()
 				time.sleep(60)
+			else:
+				time.sleep(1)
 
 def main():
 	client = Client()
