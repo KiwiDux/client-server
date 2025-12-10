@@ -69,6 +69,8 @@ class Server:
 	def main_belt(self, address, connection):
 		print('Connection from', (address))
 		print('Connection established at', datetime.now())
+		self.__init__()
+		self.client_public(connection)
 		try:
 			self.encrypted_key = self.received(connection)  # RSA-encrypted AES key
 			self.encrypted_file = self.received(connection)
@@ -120,11 +122,11 @@ class Server:
 			f.write('signature: ' + (self.signature).decode(base64))
 
 
-	def order(self, address, connection):
-		self.__init__()
-		self.existing_server_key()
-		self.client_public()
-		self.main_belt(address, connection)
+	#def order(self, address, connection):
+	#	self.__init__()
+	#	self.existing_server_key()
+	#	self.client_public()
+	#	self.main_belt(address, connection)
 		
 	def start(self):
 		self.existing_server_key()
@@ -135,7 +137,7 @@ class Server:
 		print('Server is listening on', self.ip, ':', self.port)
 		while True:
 			connection, address = s.accept()
-			self.order(address, connection)
+			#self.order(address, connection)
 
 	
 		
