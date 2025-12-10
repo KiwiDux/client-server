@@ -133,9 +133,6 @@ class Client:
 				print('\n', now.strftime('%H:%M:%S'), ' Scheduled send triggered!')
 				self.send_logs()
 				time.sleep(60)
-			if KeyboardInterrupt:
-				print('\nAuto send stopped by user.')
-				break
 
 def main():
 	client = Client()
