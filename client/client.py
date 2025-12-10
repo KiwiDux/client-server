@@ -34,8 +34,8 @@ class Client:
 
 	def	load_keys(self):
 		self.key_generation()
-		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
-		print("Loaded server private key.")
+		self.client_private_key = RSA.import_key(open('client_private_key.pem', 'rb').read())
+		print("Loaded client private key.")
 	
 	def read_logs(self): # Read Logs
 		with open('/var/log/syslog', 'rb') as f:
