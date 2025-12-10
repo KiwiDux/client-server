@@ -1,4 +1,4 @@
-import socket, os, logging, time, struct
+import socket, os, threading, time, struct
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
@@ -42,9 +42,9 @@ class Client:
 			return f.read()
     	
 	# Digital Signature (SHA-512, RSA)
-	def sign_logfile(self, private_key, file_data):
+	def sign_logfile(self, file_data):
 		hashed_object = SHA512.new(file_data)
-		signpkcs = PKCS1_v1_5.new(private_key)
+		signpkcs = PKCS1_v1_5.new(self.client_private_key)
 		sig = signpkcs.sign(hashed_object)
 		return sig
 
@@ -66,20 +66,29 @@ class Client:
 		key_encrypted = rsa_cipher.encrypt(aes_key)
 		return key_encrypted
 
-	def open_socket(self):
+	def send_data(self, encrypted_data):
+		aes_key, encrypted_file_data, tag, nonce, sig = encrypted_data
 		
-		self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		client_socket.connect((self.server_ip, self.server_port))
+		
 		try:
-			self.client_socket.connect((self.server_ip, self.server_port))
-			print('Connection established at', datetime.now())
-			
-			self.client_socket.sendall(self.client_public_key.export_key())
-			print('Client public key sent.')
-			
-			server_key = struct.unpack(">I", self.client_socket.recv(4))[0]
-			server_key_bytes = self.client_socket.recv(server_key)
+			server_key_length = struct.unpack(">I", self.client_socket.recv(4))[0]
+			server_key_bytes = self.receive_exact(client_socket, server_key_length)
 			self.server_public_key = RSA.import_key(server_key_bytes)
 			print("Received server public key")
+			
+			client_pub = open("client_public_key.pem", "rb").read()
+			client_socket.sendall(len(client_pub).to_bytes(4, "big") + client_pub)
+			print('Client public key sent.')
+
+			encrypted_aes_key = self.aes_key_encryption(aes_key)
+
+			pieces = [encrypted_aes_key, encrypted_file_data, tag, nonce, sig]
+			for piece in pieces:
+				client_socket.sendall(len(piece).to_bytes(4, "big") + piece)
+			client_socket.close()
+			print("Logs sent successfully.")
 		
 		except ConnectionRefusedError:
 			print('Connection failed: Server is not running.')
@@ -89,57 +98,30 @@ class Client:
 			print('\nAuto send stopped by user.')
 			self.client_socket.close()
 
-
 	# Start the client connection
-	def send_them(self, encrypted_aes_key, encrypted_file_data, tag, nonce, sig):
-		
+	def send_logs(self):
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
-		
-		self.existing_cpublic()
 		try:
-			
-			# Send encrypted AES key
-			self.client_socket.sendall(encrypted_aes_key)
-			print('Encrypted AES key sent.')
-			
-			# Send length of the encrypted file data
-			self.client_socket.sendall(len(self.client_public_key.export_key()).to_bytes(4, byteorder='big'))
-			
-			# Send encrypted file data
-			self.client_socket.sendall(encrypted_file_data)
-			print('Encrypted file sent at', datetime.now())
+			self.load_keys()
+			logs = self.read_logs()
+			print(f"Read {len(logs)} bytes from log file.")
 
-			# Send the tag, nonce, and digital signature for verification
-			self.client_socket.sendall(tag)
-			self.client_socket.sendall(nonce) # Nonce is 16 bytes for AES-GCM
-			self.client_socket.sendall(sig)
+			signature = self.sign_logfile(logs)
+			print("Log file signed.")
 
-			print('Signature sent at', datetime.now())	
+			encrypted_file_data, tag, nonce, aes_key = self.encrypt_logs(logs)
+			print("Log file encrypted.")
 
+			encrypted_data = (aes_key, encrypted_file_data, tag, nonce, signature)
+			print("AES key encrypted with RSA")
+			self.send_data(encrypted_data)
+		
 		except Exception as e:
-			print('Error during sending:', e)
+			print("Error during sending:", e)
 
-		return
-
-
-	def start_sequence(self):
-		
-		self.__init__()
-
-		log_file = self.read_logs()
-		
-		self.open_socket()
-
-		print('\nEncrypting Logs')
-		encryption_result = self.encrypt_logs(log_file)
-		
-		if encryption_result:
-			encrypted_aes_key, encrypted_file_data, tag, nonce, sig = encryption_result
-			print('\nSending Logs')
-			self.send_them(encrypted_aes_key, encrypted_file_data, tag, nonce, sig)
-
-
-
+	def send_manually(self):
+		print(" Manual log send started.")
+		self.send_logs()
 
 	def auto_send(self):
 		print(' Auto_send started. Logs will be sent at 17:00 every day.')
@@ -147,33 +129,35 @@ class Client:
 			now = datetime.now()
 			if now.hour == 17 and now.minute == 0:
 				print('\n', now.strftime('%H:%M:%S'), ' Scheduled send triggered!')
-				self.start_sequence()
+				self.send_logs()
 				time.sleep(60)
 			if KeyboardInterrupt:
 				print('\nAuto send stopped by user.')
 				break
-
 
 def main():
 	client = Client()
 	print('\n## Program started at', datetime.now(), ' ##')
 	
 	string_menu = '\n1.\tManual Log Send.\n2.\tAuto Log Send at 17:00.\n\nSelect an option from above: '
-	menu_select = input(string_menu)
+	
+	while True:
+		menu_select = input(string_menu)
 
-	if menu_select == '1':
-		client.start_sequence()
+		if menu_select == '1':
+			client.send_manually()
 
-	elif menu_select == '2':
-		print('Automatic log sending (17:00 daily). Press Any Key to stop.')
-		client.auto_send()
+		elif menu_select == '2':
+			auto_thread = threading.Thread(target=client.auto_send, daemon=True)
+			auto_thread.start()
+			print('Automatically sending logs at 17:00 daily.')
 
-	elif menu_select == '3':
-		print('Exiting program.')
+		elif menu_select == '3':
+			print('Exiting program.')
+			break
 
-	else:
-		print('Invalid selection!')
-
+		else:
+			print('Invalid selection!')
 
 if __name__ == '__main__':
 	main()
