@@ -74,24 +74,48 @@ class Client:
 		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		client_socket.connect((self.server_ip, self.server_port))
 		
+
+	def send_data(self, encrypted_data):
+		aes_key, encrypted_file_data, tag, nonce, sig = encrypted_data
+
+		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		client_socket.connect((self.server_ip, self.server_port))
+
 		try:
+			# Receive server public key
 			server_key_length = struct.unpack(">I", client_socket.recv(4))[0]
 			server_key_bytes = self.receive_exact(client_socket, server_key_length)
 			self.server_public_key = RSA.import_key(server_key_bytes)
 			print("Received server public key")
 			
+			# Send client public key
 			client_pub = open("client_public_key.pem", "rb").read()
 			client_socket.sendall(len(client_pub).to_bytes(4, "big") + client_pub)
 			print('Client public key sent.')
 
 			encrypted_aes_key = self.aes_key_encryption(aes_key)
 
+			start_time = time.time()
+			bytes_sent = 0
+
 			pieces = [encrypted_aes_key, encrypted_file_data, tag, nonce, sig]
+
 			for piece in pieces:
-				client_socket.sendall(len(piece).to_bytes(4, "big") + piece)
+				header = len(piece).to_bytes(4, "big")
+				client_socket.sendall(header)
+				client_socket.sendall(piece)
+
+				bytes_sent += len(header) + len(piece)
+
 			client_socket.close()
+
+			end_time = time.time()
+			duration = end_time - start_time
+			throughput_mbps = (bytes_sent * 8) / duration / 1_000_000
+
 			print("Logs sent successfully.")
-		
+			print(f"Throughput: {throughput_mbps:.2f} Mbps")
+
 		except ConnectionRefusedError:
 			print('Connection failed: Server is not running.')
 		except Exception as error:
@@ -99,6 +123,7 @@ class Client:
 		except KeyboardInterrupt:
 			print('\nAuto send stopped by user.')
 			self.client_socket.close()
+
 
 	def send_logs(self):
 		"""Start the client connection"""
