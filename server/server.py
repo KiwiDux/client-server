@@ -75,8 +75,6 @@ class Server:
 			aes_key = self.decrypt_aes(encrypted_key)
 			decrypted_file = self.decrypt_file(aes_key, encrypted_file, tag, nonce)
 
-			print("Decrypted file:\n", decrypted_file.decode())
-
 			if self.verify(signature, decrypted_file):
 				print('Signature is valid.')
 			else:
