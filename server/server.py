@@ -31,8 +31,8 @@ class Server:
 		self.key_generation()
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
 	
-	def decrypt_aes(self):
-		return PKCS1_OAEP.new(self.server_private_key).decrypt(self.aes_key)
+	def decrypt_aes(self, encrypted_key):
+		return PKCS1_OAEP.new(self.server_private_key).decrypt(encrypted_key)
 		 
 	def received(self, sock):
 		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
@@ -111,6 +111,7 @@ class Server:
 		return
 
 	def start(self):
+		self.key_generation()
 		print('Connection opened at', datetime.now())
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.bind((self.ip, self.port))  # Bind to any interface

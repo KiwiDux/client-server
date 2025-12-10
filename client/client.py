@@ -152,7 +152,6 @@ class Client:
 		
 		self.open_socket()
 
-
 		print('\nEncrypting Logs')
 		encryption_result = self.encrypt_logs(log_file)
 		
