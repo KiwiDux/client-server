@@ -85,10 +85,8 @@ class Server:
 
 			if self.verify(self.decrypted_file, signature):
 				print('Signature is valid.')
-
 			else:
 				print('Signature is invalid.')
-
 
 			with open('received_file.txt', 'wb') as f:
 				f.write(self.decrypted_file)
@@ -97,8 +95,6 @@ class Server:
 			print('Error:', e)
 		
 		self.save_recieved_file(address, encrypted_key, encrypted_file, tag, nonce, signature)
-
-
 		return
 
 	def save_recieved_file(self, address, encrypted_key, encrypted_file, tag, nonce, signature):
