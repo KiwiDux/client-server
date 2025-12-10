@@ -21,9 +21,6 @@ class Server:
 		if not os.path.exists('server_private_key.pem'):
 			key = RSA.generate(2048)
 			open('server_private_key.pem', 'wb').write(key.export_key())
-		
-		if not os.path.exists('server_public_key.pem'):
-			key = RSA.generate(2048)
 			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
 		
 		print('Keys generated.')
@@ -32,13 +29,6 @@ class Server:
 	def	existing_server_key(self):
 		self.key_generation()
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
-
-
-	def client_public(self, sock):
-		client_pub_len = struct.unpack('>I', self.receive_exact(sock, 4))[0]
-		client_pub = self.receive_exact(sock, client_pub_len)
-		self.client_pub = RSA.import_key(client_pub)
-		print('Client public key received')
 	
 	def decrypt_aes(self):
 		return PKCS1_OAEP.new(self.server_private_key).decrypt(self.aes_key)
@@ -70,10 +60,18 @@ class Server:
 		print('Connection from', (address))
 		print('Connection established at', datetime.now())
 		self.__init__()
-		self.client_public(connection)
 		self.existing_server_key()
-
+		
 		try:
+			
+			server_pub = open("server_public_key.pem", "rb").read()
+			connection.sendall(len(server_pub).to_bytes(4, "big") + server_pub)
+			
+			client_public_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
+			receive_cpk = self.receive_exact(connection, client_public_len)
+			self.client_public_key = RSA.import_key(receive_cpk)
+			print('Client public key received')
+
 			self.encrypted_key = self.received(connection)  # RSA-encrypted AES key
 			self.encrypted_file = self.received(connection)
 			self.tag = self.received(connection)
