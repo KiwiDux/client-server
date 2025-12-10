@@ -61,8 +61,8 @@ class Client:
 		return ciphertext, tag, aes_cipher.nonce, aes_key
 
 	# Encrypt the AES key with RSA (SHA-512)
-	def aes_key_encryption(self, public_key, aes_key):
-		rsa_cipher = PKCS1_OAEP.new(public_key, hashAlgo=SHA512)
+	def aes_key_encryption(self, aes_key):
+		rsa_cipher = PKCS1_OAEP.new(self.server_public_key, hashAlgo=SHA512)
 		key_encrypted = rsa_cipher.encrypt(aes_key)
 		return key_encrypted
 
