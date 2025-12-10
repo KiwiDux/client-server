@@ -94,11 +94,6 @@ class Server:
 		except Exception as e:
 			print('Error:', e)
 		
-		self.save_recieved_file(address, encrypted_key, encrypted_file, tag, nonce, signature)
-		return
-
-	def save_recieved_file(self, address, encrypted_key, encrypted_file, tag, nonce, signature):
-		
 		# Ensure folder exists
 		save_folder = ('/Desktop/server/LOGFILES/')
 		save_file = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/' + str((address)[1]))
@@ -118,8 +113,6 @@ class Server:
 			os.makedirs(save_folder, exist_ok=True)
 			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 			filename = os.path.join(save_file, current_time + '.txt')
-
-
 		import base64
 
 		with open(filename, 'w', encoding='utf-8') as f:
@@ -129,12 +122,8 @@ class Server:
 			f.write('nonce: ' + (nonce).decode(base64) + '\n')
 			f.write('signature: ' + (signature).decode(base64))
 
-	#def order(self, address, connection):
-	#	self.__init__()
-	#	self.existing_server_key()
-	#	self.client_public()
-	#	self.main_belt(address, connection)
-		
+		return
+
 	def start(self):
 		print('Connection opened at', datetime.now())
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
