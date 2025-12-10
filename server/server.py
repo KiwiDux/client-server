@@ -55,24 +55,6 @@ class Server:
 		cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
 		return cipher.decrypt_and_verify(encrypted_file, tag)
 	
-	def save_recieved_file(self, address):
-		
-		# Ensure folder exists
-		save_folder = ('/Desktop/LOGFILES/' + address)
-
-		if not os.path.exists(save_folder):
-			os.makedirs(save_folder, exist_ok=True)
-			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-			filename = os.path.join(save_folder, current_time + '.txt')
-
-		import base64	
-
-		with open(filename, 'w', encoding='utf-8') as f:
-			f.write('encrypted_aes_key: ' + (self.encrypted_key).decode(base64) + '\n')
-			f.write('encrypted_file: ' + (self.encrypted_file).decode(base64) + '\n')
-			f.write('tag: ' + (self.tag).decode(base64) + '\n')
-			f.write('nonce: ' + (self.nonce).decode(base64) + '\n')
-			f.write('signature: ' + (self.signature).decode(base64))
 
 	def main_belt(self, address, connection):
 		print('Connection from', (address))
@@ -118,6 +100,24 @@ class Server:
 
 		return
 
+	def save_recieved_file(self, address):
+		
+		# Ensure folder exists
+		save_folder = ('/Desktop/LOGFILES/' + (address)[1])
+
+		if not os.path.exists(save_folder):
+			os.makedirs(save_folder, exist_ok=True)
+			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+			filename = os.path.join(save_folder, current_time + '.txt')
+
+		import base64	
+
+		with open(filename, 'w', encoding='utf-8') as f:
+			f.write('encrypted_aes_key: ' + (self.encrypted_key).decode(base64) + '\n')
+			f.write('encrypted_file: ' + (self.encrypted_file).decode(base64) + '\n')
+			f.write('tag: ' + (self.tag).decode(base64) + '\n')
+			f.write('nonce: ' + (self.nonce).decode(base64) + '\n')
+			f.write('signature: ' + (self.signature).decode(base64))
 
 	#def order(self, address, connection):
 	#	self.__init__()
