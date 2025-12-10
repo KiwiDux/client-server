@@ -55,11 +55,8 @@ class Server:
 	def main_belt(self, address, connection):
 		print('Connection from', (address))
 		print('Connection established at', datetime.now())
-		self.__init__()
-		self.existing_server_key()
 		
 		try:
-			
 			server_pub = open("server_public_key.pem", "rb").read()
 			connection.sendall(len(server_pub).to_bytes(4, "big") + server_pub)
 			
