@@ -1,4 +1,4 @@
-import socket, os, logging, time
+import socket, os, logging, time, struct
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
@@ -63,11 +63,20 @@ class Client:
 		with open('client_public_key.pem', 'rb') as key_file:
 			self.client_public_key = RSA.import_key(key_file.read())
 
+	def receive_exact(self, sock, length):
+		data = b""
+		while len(data) < length:
+			chunk = sock.recv(length - len(data))
+			if not chunk:
+				raise ConnectionError("Socket closed")
+			data += chunk
+		return data
+
 	# Encrypt, sign logs
 	def encrypt_logs(self, log_file):
 
 		file_data = log_file
-		
+	
 		self.existing_cprivate()
 		self.existing_spublic()
 
@@ -124,6 +133,11 @@ class Client:
 
 			print('Signature sent at', datetime.now())
 			
+			server_key_len = struct.unpack(">I", client_socket.recv(4))[0]
+			server_key_bytes = self.receive_exact(client_socket, server_key_len)
+			self.server_public_key = RSA.import_key(server_key_bytes)
+			print("Received server public key")
+		
 		except ConnectionRefusedError:
 			print('Connection failed: Server is not running.')
 		except Exception as error:
