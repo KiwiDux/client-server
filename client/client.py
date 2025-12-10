@@ -8,14 +8,57 @@ from datetime import datetime
 
 
 class Client:
+	def __init__(self):
+		#self.server_ip = input('Enter the server IP address: ')
+		#self.server_port = int(input('Enter the server port: '))
+		self.server_ip = '192.168.200.4'
+		self.server_port = 1234
+
+	def key_generation(self):
+		if not os.path.exists('client_private_key.pem'):
+			print("Generating Keys...")
+			key = RSA.generate(2048)
+			open('client_private_key.pem', 'wb').write(key.export_key())
+			open('client_public_key.pem', 'wb').write(key.publickey().export_key())
+		
+		print("Keys generated.")
+	
+	def receive_exact(self, sock, length):
+		data = b""
+		while len(data) < length:
+			chunk = sock.recv(length - len(data))
+			if not chunk:
+				raise ConnectionError('Connection closed')
+			data += chunk
+		return data
+
+	def	load_keys(self):
+		self.key_generation()
+		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
+		print("Loaded server private key.")
+	
+	def read_logs(self): # Read Logs
+		with open('/var/log/syslog', 'rb') as f:
+			return f.read()
     	
 	# Digital Signature (SHA-512, RSA)
-	def file_signature(self, private_key, file_data):
+	def sign_logfile(self, private_key, file_data):
 		hashed_object = SHA512.new(file_data)
 		signpkcs = PKCS1_v1_5.new(private_key)
 		sig = signpkcs.sign(hashed_object)
 		return sig
 
+	# Encrypt, sign logs
+	def encrypt_logs(self, log_file):
+		# Generate a random AES key for symmetric encryption
+		aes_key = get_random_bytes(32)  # AES-256
+		print('AES key generated.')
+
+		aes_cipher = AES.new(aes_key, AES.MODE_GCM)  # GCM uses a nonce
+
+		ciphertext, tag = aes_cipher.encrypt_and_digest(log_file)
+
+		return ciphertext, tag, aes_cipher.nonce, aes_key
 
 	# Encrypt the AES key with RSA (SHA-512)
 	def aes_key_encryption(self, public_key, aes_key):
@@ -23,73 +66,8 @@ class Client:
 		key_encrypted = rsa_cipher.encrypt(aes_key)
 		return key_encrypted
 
-
-	# Encrypt the file with AES-256-GCM
-	def aes_file_encryption(self, aes_key, file_data):
-		aes_cipher = AES.new(aes_key, AES.MODE_GCM)  # GCM uses a nonce
-		ciphertext, tag = aes_cipher.encrypt_and_digest(file_data)
-		return ciphertext, tag, aes_cipher.nonce
-
-	
-	def __init__(self):
-		
-		#self.server_ip = input('Enter the server IP address: ')
-		#self.server_port = int(input('Enter the server port: '))
-		self.server_ip = '192.168.200.4'
-		self.server_port = 1234
-		
-	
-	def read_logs(self): # Read Logs
-		with open('/var/log/syslog', 'rb') as f:
-			return f.read()
-
-	def key_generation(self):
-		if not os.path.exists('client_private_key.pem'):
-			key = RSA.generate(2048)
-			open('client_private_key.pem', 'wb').write(key.export_key())
-			open('client_public_key.pem', 'wb').write(key.publickey().export_key())
-			print('Keys generated.')
-
-	def	existing_cprivate(self):
-		self.key_generation()
-		with open('client_private_key.pem', 'rb') as key_file:
-			self.client_private_key = RSA.import_key(key_file.read())
-
-	def existing_spublic(self):
-		with open('server_public_key.pem', 'rb') as key_file:
-			self.server_public_key = RSA.import_key(key_file.read())
-
-	def existing_cpublic(self):
-		with open('client_public_key.pem', 'rb') as key_file:
-			self.client_public_key = RSA.import_key(key_file.read())
-
-	# Encrypt, sign logs
-	def encrypt_logs(self, log_file):
-
-		file_data = log_file
-	
-		self.existing_cprivate()
-		self.existing_spublic()
-
-		# Sign the file
-		sig = self.file_signature(self.client_private_key, file_data)
-		print('File signed successfully.')
-
-		# Generate a random AES key for symmetric encryption
-		aes_key = get_random_bytes(32)  # AES-256
-		print('AES key generated.')
-		
-		# Encrypt the file with AES-256-GCM
-		encrypted_file_data, tag, nonce = self.aes_file_encryption(aes_key, file_data)
-		print('File encrypted with AES.')
-
-		# Encrypt the AES key with RSA (server's public key)
-		encrypted_aes_key = self.aes_key_encryption(self.server_public_key, aes_key)
-		print('AES key encrypted with RSA.')
-
-		return encrypted_aes_key, encrypted_file_data, tag, nonce, sig
-
 	def open_socket(self):
+		
 		self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			self.client_socket.connect((self.server_ip, self.server_port))

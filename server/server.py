@@ -9,52 +9,49 @@ from datetime import datetime
 
 class Server:
 
-	def __init__(self):
-		
+	def __init__(self, ip="192.168.200.4", port=1234):
 		#self.ip = input('Enter the order IP address: ')
 		#self.port = int(input('Enter the order port: '))
-		self.ip = '192.168.200.4'
-		self.port = 1234
-		return
-
+		self.ip = ip
+		self.port = port
 
 	def key_generation(self):
 		if not os.path.exists('server_private_key.pem'):
+			print("Generating Keys...")
 			key = RSA.generate(2048)
 			open('server_private_key.pem', 'wb').write(key.export_key())
 			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
 		
-		print('Keys generated.')
+		print("Keys generated.")
+	
+	def receive_exact(self, sock, length):
+		data = b""
+		while len(data) < length:
+			chunk = sock.recv(length - len(data))
+			if not chunk:
+				raise ConnectionError('Connection closed')
+			data += chunk
+		return data
 
-
-	def	existing_server_key(self):
+	def	load_keys(self):
 		self.key_generation()
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
+		print("Loaded server private key.")
 	
-	def decrypt_aes(self, encrypted_key):
-		return PKCS1_OAEP.new(self.server_private_key).decrypt(encrypted_key)
-		 
 	def received(self, sock):
 		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
 		return self.receive_exact(sock, length)
-
-	def receive_exact(self, sock, length):
-		data = b''
-		while len(data) < length:
-			packet = sock.recv(length - len(data))
-			if not packet:
-				raise ConnectionError('Connection closed')
-			data += packet
-		return data, sock
+	
+	def decrypt_aes(self, encrypted_key):
+		return PKCS1_OAEP.new(self.server_private_key).decrypt(encrypted_key)
+	
+	def decrypt_file(self, aes_key, encrypted_file, tag, nonce):
+		cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
+		return cipher.decrypt_and_verify(encrypted_file, tag)
 	
 	def verify(self, signature, data):
 		hash = SHA512.new(data)
 		return PKCS1_v1_5.new(self.client_public_key).verify(hash, signature)
-		
-
-	def decrypt_file(self, aes_key, encrypted_file, tag, nonce):
-		cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
-		return cipher.decrypt_and_verify(encrypted_file, tag)
 	
 	def main_belt(self, address, connection):
 		print('Connection from', (address))
@@ -79,41 +76,34 @@ class Server:
 			signature = self.received(connection)
 
 			self.aes_key = self.decrypt_aes(encrypted_key)
-			self.decrypted_file = self.decrypt_file(self.aes_key, encrypted_file, tag, nonce)
+			decrypted_file = self.decrypt_file(self.aes_key, encrypted_file, tag, nonce)
 
-			aes_file_decryption = (self.aes_key, encrypted_file, tag, nonce)
+			print("Decrypted file:\n", decrypted_file.decode())
 
-			if self.verify(self.decrypted_file, signature):
+			if self.verify(decrypted_file, signature):
 				print('Signature is valid.')
 			else:
 				print('Signature is invalid.')
 
 			with open('received_file.txt', 'wb') as f:
-				f.write(self.decrypted_file)
+				f.write(decrypted_file)
+
+			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
+
+			return decrypted_file
 		
 		except Exception as e:
-			print('Error:', e)
-		
-		# Ensure folder exists
-		save_folder = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/')
-		filename = (str((address)[1]) + '_received_file')
-		current_time = datetime.now().strftime('-%Y-%m-%d_%H-%M-%S')
-		filepath = os.path.join(save_folder, filename, current_time + '.txt')
-
-		def _save_file(path: str, data: str | bytes) -> None:
-			Path(path).parent.mkdir(parents=True, exist_ok=True)
-			mode = 'wb' if isinstance(data, bytes) else 'w'
-			with open(path , mode) as f:
-				f.write(data)
-		
-		_save_file(filepath, self.decrypted_file)
-
-		return
+			print("Error:", e)
+		finally:
+			connection.close()
+			print('Connection closed at', datetime.now())
 
 	def start(self):
 		self.key_generation()
+		self.load_keys()
 		print('Connection opened at', datetime.now())
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		s.bind((self.ip, self.port))  # Bind to any interface
 		s.listen(1)
 		print('Server is listening on', self.ip, ':', self.port)
@@ -121,8 +111,6 @@ class Server:
 			connection, address = s.accept()
 			self.main_belt(address, connection)
 			#self.order(address, connection)
-
-	
 		
 if __name__ == '__main__':
 	Server().start()
