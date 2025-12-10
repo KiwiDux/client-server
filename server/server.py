@@ -1,4 +1,5 @@
 import socket, os, struct
+from pathlib import Path
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
@@ -55,7 +56,6 @@ class Server:
 		cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
 		return cipher.decrypt_and_verify(encrypted_file, tag)
 	
-
 	def main_belt(self, address, connection):
 		print('Connection from', (address))
 		print('Connection established at', datetime.now())
@@ -96,31 +96,17 @@ class Server:
 		
 		# Ensure folder exists
 		save_folder = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/')
-		save_file = ('/home/snsa-sal/Desktop/client-server/server/LOGFILES/' + str((address)[1]))
 		filename = (str((address)[1]) + '_received_file')
+		current_time = datetime.now().strftime('-%Y-%m-%d_%H-%M-%S')
+		filepath = os.path.join(save_folder, filename, current_time + '.txt')
 
-		try:
-			if os.path.exists(save_file):
-				print('file permissions to allow writing.')
-				return
-
-			else:
-				print('File does not exist to change permissions.')
-		except PermissionError:
-			print('Permission denied: Unable to change file permissions.')
-
-		if not os.path.exists(save_folder):
-			os.makedirs(save_folder, exist_ok=True)
-			current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-			filename = os.path.join(save_file, current_time + '.txt')
-		import base64
-
-		with open(filename, 'w', encoding='utf-8') as f:
-			f.write('encrypted_aes_key: ' + (encrypted_key).decode(base64) + '\n')
-			f.write('encrypted_file: ' + (encrypted_file).decode(base64) + '\n')
-			f.write('tag: ' + (tag).decode(base64) + '\n')
-			f.write('nonce: ' + (nonce).decode(base64) + '\n')
-			f.write('signature: ' + (signature).decode(base64))
+		def _save_file(path: str, data: str | bytes) -> None:
+			Path(path).parent.mkdir(parents=True, exist_ok=True)
+			mode = 'wb' if isinstance(data, bytes) else 'w'
+			with open(path , mode) as f:
+				f.write(data)
+		
+		_save_file(filepath, self.decrypted_file)
 
 		return
 
