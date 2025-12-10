@@ -79,11 +79,11 @@ class Server:
 			signature = self.received(connection)
 
 			self.aes_key = self.decrypt_aes(encrypted_key)
-			self.decrypted_file = self.decrypt_file(self.aes_key, self.encrypted_file, self.tag, self.nonce)
+			self.decrypted_file = self.decrypt_file(self.aes_key, encrypted_file, tag, nonce)
 
-			aes_file_decryption = (self.aes_key, self.encrypted_file, self.tag, self.nonce)
+			aes_file_decryption = (self.aes_key, encrypted_file, tag, nonce)
 
-			if self.verify(self.decrypted_file, self.signature):
+			if self.verify(self.decrypted_file, signature):
 				print('Signature is valid.')
 
 			else:
@@ -98,7 +98,8 @@ class Server:
 		
 		self.save_recieved_file(address, encrypted_key, encrypted_file, tag, nonce, signature)
 
-		return encrypted_key, encrypted_file, tag, nonce, signature
+
+		return
 
 	def save_recieved_file(self, address, encrypted_key, encrypted_file, tag, nonce, signature):
 		
