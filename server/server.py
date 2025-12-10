@@ -71,6 +71,8 @@ class Server:
 		print('Connection established at', datetime.now())
 		self.__init__()
 		self.client_public(connection)
+		self.existing_server_key()
+		
 		try:
 			self.encrypted_key = self.received(connection)  # RSA-encrypted AES key
 			self.encrypted_file = self.received(connection)
@@ -129,7 +131,6 @@ class Server:
 	#	self.main_belt(address, connection)
 		
 	def start(self):
-		self.existing_server_key()
 		print('Connection opened at', datetime.now())
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.bind((self.ip, self.port))  # Bind to any interface
