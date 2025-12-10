@@ -34,7 +34,6 @@ class Server:
 		return data
 
 	def	load_keys(self):
-		self.key_generation()
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
 		print("Loaded server private key.")
 	
