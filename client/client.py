@@ -1,3 +1,5 @@
+# Client
+
 import socket, os, threading, time, struct
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
@@ -62,7 +64,7 @@ class Client:
 
 	# Encrypt the AES key with RSA (SHA-512)
 	def aes_key_encryption(self, aes_key):
-		rsa_cipher = PKCS1_OAEP.new(self.server_public_key, hashAlgo=SHA512)
+		rsa_cipher = PKCS1_OAEP.new(self.server_public_key)
 		key_encrypted = rsa_cipher.encrypt(aes_key)
 		return key_encrypted
 
