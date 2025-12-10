@@ -72,7 +72,7 @@ class Server:
 		self.__init__()
 		self.client_public(connection)
 		self.existing_server_key()
-		
+
 		try:
 			self.encrypted_key = self.received(connection)  # RSA-encrypted AES key
 			self.encrypted_file = self.received(connection)
@@ -138,6 +138,7 @@ class Server:
 		print('Server is listening on', self.ip, ':', self.port)
 		while True:
 			connection, address = s.accept()
+			self.main_belt(address, connection)
 			#self.order(address, connection)
 
 	
