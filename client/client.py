@@ -126,7 +126,7 @@ class Client:
 		self.send_logs()
 
 	def auto_send(self):
-		print(' Auto_send started. Logs will be sent at 17:00 every day.')
+		print('Auto_send started. Logs will be sent at 17:00 every day.')
 		while True:
 			now = datetime.now()
 			if now.hour == 17 and now.minute == 0:

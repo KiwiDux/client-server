@@ -1,6 +1,6 @@
 # Server
 
-import socket, os, struct
+import socket, os, struct, random, time
 from pathlib import Path
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
@@ -81,8 +81,10 @@ class Server:
 				print('Signature is valid.')
 			else:
 				print('Signature is invalid.')
-
-			with open('received_file.txt', 'wb') as f:
+			
+			randnum = random.randint(1, 9999)
+			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
+			with open(filename, 'wb') as f:
 				f.write(decrypted_file)
 
 			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
@@ -106,8 +108,12 @@ class Server:
 		print('Server is listening on', self.ip, ':', self.port)
 		while True:
 			connection, address = s.accept()
-			self.main_belt(address, connection)
-			#self.order(address, connection)
+			start = time.time()
+			data = self.main_belt(address, connection)
+			size_bits = len(data) * 8
+			end = time.time()
+			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
+			print(f"Receieved: {data.decode()} | Throughput: {throughput:.2f} Mbps")
 		
 if __name__ == '__main__':
 	Server().start()
