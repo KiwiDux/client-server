@@ -73,7 +73,7 @@ class Client:
 		client_socket.connect((self.server_ip, self.server_port))
 		
 		try:
-			server_key_length = struct.unpack(">I", self.client_socket.recv(4))[0]
+			server_key_length = struct.unpack(">I", client_socket.recv(4))[0]
 			server_key_bytes = self.receive_exact(client_socket, server_key_length)
 			self.server_public_key = RSA.import_key(server_key_bytes)
 			print("Received server public key")
