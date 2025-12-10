@@ -103,7 +103,7 @@ class Server:
 	def save_recieved_file(self, address):
 		
 		# Ensure folder exists
-		save_folder = ('/Desktop/LOGFILES/' + (address)[1])
+		save_folder = ('/Desktop/LOGFILES/' + str((address)[1]))
 
 		if not os.path.exists(save_folder):
 			os.makedirs(save_folder, exist_ok=True)
