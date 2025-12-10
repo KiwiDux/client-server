@@ -77,7 +77,7 @@ class Server:
 
 			print("Decrypted file:\n", decrypted_file.decode())
 
-			if self.verify(decrypted_file, signature):
+			if self.verify(signature, decrypted_file):
 				print('Signature is valid.')
 			else:
 				print('Signature is invalid.')
