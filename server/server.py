@@ -124,7 +124,7 @@ class Server:
 			print(base_filename + ".enc")
 
 
-			filename = str((address)[0] + (address)[1]) + '_received_file_' + str(randnum) + '.txt'
+			filename = f"{(address)[0]}{(address)[1]}_received_file_{randnum}.txt"
 			with open(filename, 'wb') as f:
 				f.write(decrypted_file)
 
