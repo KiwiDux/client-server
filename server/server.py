@@ -81,9 +81,16 @@ class Server:
 				print('Signature is invalid.')
 			
 			randnum = random.randint(1, 9999)
-			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
-			with open(filename, 'wb') as f:
-				f.write(decrypted_file)
+			base_filename = (address, '_received_file_', randnum)
+
+			# Encrypt file using *server public key*
+			encrypted_storage_file = self.rsa_encrypt_for_storage(decrypted_file)
+
+			# Save encrypted file
+			with open(base_filename + "_stored.enc", "wb") as f:
+				f.write(encrypted_storage_file)
+			print('Encrypted storage file saved as ', base_filename, '_stored.enc')
+
 
 			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
 
