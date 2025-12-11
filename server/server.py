@@ -221,7 +221,7 @@ class Server:
 				enc_files[base]['nonce'] = file
 
 		if not enc_files:
-			print('[-] No encrypted files found.')
+			print('\n[-] No encrypted files found.')
 			return None
 
 		print(f'\n[+] Found {len(enc_files)} encrypted file set(s):\n')
@@ -283,14 +283,14 @@ class Server:
 						base_filename = list(enc_files.keys())[idx - 1]
 						self.decrypt_stored_file(base_filename)
 					except (ValueError, IndexError):
-						print('[-] Invalid selection.')
+						print('\n[-] Invalid selection.')
 
 			elif choice == '3':
 				print('Exiting...')
 				break
 
 			else:
-				print('[-] Invalid option.')
+				print('\n[-] Invalid option.')
 		
 if __name__ == '__main__':
 	Server().start_threaded()
