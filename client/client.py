@@ -160,16 +160,52 @@ class Client:
 				time.sleep(1)
 
 	def follow(self):
+		# Tail the log file in binary mode and trigger sending when new data appears.
+		log_path = '/var/log/syslog'
 		print('Log monitoring started. Logs will be sent when updated.')
-		thefile = self.reading_logs() 
-		thefile.seek(0, os.SEEK_END)
-		while True:
-			line = thefile.readline()
-			if not line:
-				time.sleep(0.1)
-				continue
-			print('New log entry detected. Sending updated logs...')
-			self.sending_logs()
+
+		try:
+			f = open(log_path, 'rb')
+			# Seek to end to only observe new appended data
+			f.seek(0, os.SEEK_END)
+
+			while True:
+				line = f.readline()
+				if not line:
+					# Check for rotation/truncation
+					try:
+						current_size = os.path.getsize(log_path)
+					except FileNotFoundError:
+						time.sleep(1)
+						continue
+
+					# If file has been truncated, reopen and seek to end
+					if current_size < f.tell():
+						try:
+							f.close()
+						except Exception:
+							pass
+						f = open(log_path, 'rb')
+						f.seek(0, os.SEEK_END)
+						continue
+
+					time.sleep(0.1)
+					continue
+
+				# New bytes were read (bytes object)
+				try:
+					print('New log entry detected. Sending updated logs...')
+				except Exception:
+					pass
+				# Trigger sending; existing sending_logs() reads the whole file as bytes
+				self.sending_logs()
+
+		except Exception as e:
+			print('Error in follow():', e)
+			try:
+				f.close()
+			except Exception:
+				pass
 		
 
 def main():
