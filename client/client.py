@@ -225,7 +225,8 @@ def main():
 			print('Automatically sending logs at 17:00 daily.')
 
 		elif menu_selection == '3':
-			client.follow()
+			update_thread = threading.Thread(target=client.follow(), daemon=True)
+			update_thread.start()
 			break
 
 		elif menu_selection == '4':
