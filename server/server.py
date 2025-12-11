@@ -149,6 +149,8 @@ class Server:
 		- encrypted_logs/base_filename.key.enc (RSA-encrypted AES key)
 		- encrypted_logs/base_filename.tag (GCM authentication tag)
 		- encrypted_logs/base_filename.nonce (GCM nonce)
+		
+		Saves decrypted file to decrypted_logs/ folder.
 		'''
 		try:
 			# Load encrypted AES key and decrypt it
@@ -170,8 +172,13 @@ class Server:
 			plaintext = cipher.decrypt_and_verify(ciphertext, tag)
 			print(f'[+] File decrypted and verified successfully.')
 			
-			# Save plaintext
-			output_file = os.path.join(self.encrypted_folder, base_filename + '_decrypted.txt')
+			# Create decrypted_logs folder if it doesn't exist
+			decrypted_folder = 'decrypted_logs'
+			if not os.path.exists(decrypted_folder):
+				os.makedirs(decrypted_folder)
+			
+			# Save plaintext to decrypted_logs folder
+			output_file = os.path.join(decrypted_folder, base_filename + '_decrypted.txt')
 			with open(output_file, 'wb') as f:
 				f.write(plaintext)
 			print(f'[+] Decrypted content saved to {output_file}')
@@ -245,7 +252,7 @@ class Server:
 			end = time.time()
 			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
 			#print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
-			print(f'Throughput: {throughput:.2f} Mbps')
+			print(f'\nThroughput: {throughput:.2f} Mbps')
 
 
 	def start_threaded(self):
