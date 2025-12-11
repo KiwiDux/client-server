@@ -89,7 +89,7 @@ class Server:
 			# --- Secure Storage Encryption (Hybrid: AES + RSA) ---
 
 			# 1. Generate AES key
-			storage_key = self.get_random_bytes(32)
+			storage_key = encrypted_key
 
 			# 2. Encrypt file with AES-GCM
 			storage_cipher = AES.new(storage_key, AES.MODE_GCM)
