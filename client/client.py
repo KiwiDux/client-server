@@ -166,7 +166,7 @@ class Client:
 
 		try:
 			f = open(log_path, 'rb')
-			# Seek to end to only observe new appended data
+			# Seek to end to only observe new data
 			f.seek(0, os.SEEK_END)
 
 			while True:
@@ -190,6 +190,7 @@ class Client:
 						continue
 
 					time.sleep(0.1)
+					self.send_logs()
 					continue
 
 				# New bytes were read (bytes object)
