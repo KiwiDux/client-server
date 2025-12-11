@@ -242,7 +242,7 @@ class Server:
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		s.bind((self.ip, self.port))  # Bind to any interface
 		s.listen(1)
-		print('Server is listening on', self.ip, ':', self.port)
+		print('\nServer is listening on', self.ip, ':', self.port)
 		while True:
 			connection, address = s.accept()
 			start = time.time()
