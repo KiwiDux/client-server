@@ -244,7 +244,8 @@ class Server:
 			size_bits = len(data) * 8
 			end = time.time()
 			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
-			print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
+			#print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
+			print(f'Throughput: {throughput:.2f} Mbps')
 
 
 	def start_threaded(self):
