@@ -39,6 +39,11 @@ class Server:
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
 		print('Loaded server private key.')
 	
+	def rsa_encrypt_for_storage(self, data):
+		server_pub = RSA.import_key(open('server_public_key.pem', 'rb').read())
+		cipher = PKCS1_OAEP.new(server_pub)
+		return cipher.encrypt(data)
+
 	def received(self, sock):
 		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
 		return self.receive_exact(sock, length)
