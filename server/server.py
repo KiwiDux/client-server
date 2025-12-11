@@ -82,24 +82,24 @@ class Server:
 			
 
 			#######STORE SECURELY#######
-			server_public_key = RSA.import_key(open('server_public_key.pem', 'rb').read())
-			cipher = PKCS1_OAEP.new(server_public_key)
+			#server_public_key = RSA.import_key(open('server_public_key.pem', 'rb').read())
+			#cipher = PKCS1_OAEP.new(server_public_key)
 
 			# Encrypt before saving to disk
-			blob = cipher.encrypt(decrypted_file)
+			#blob = cipher.encrypt(decrypted_file)
 
-			randnum = random.randint(1, 9999)
-			filename = ((address)[0], (address)[1], '_encrypted_storage_', randnum, '.bin')
+#			randnum = random.randint(1, 9999)
+#			filename = ((address)[0], (address)[1], '_encrypted_storage_', randnum, '.bin')
 
-			with open(filename, 'wb') as f:
-				f.write(blob)
+#			with open(filename, 'wb') as f:
+#				f.write(blob)
 
-			print('Securely stored encrypted file as:', filename)
+#			print('Securely stored encrypted file as:', filename)
 
-			randnum = random.randint(1, 9999)
-			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
-			with open(filename, 'wb') as f:
-				f.write(decrypted_file)
+#			randnum = random.randint(1, 9999)
+#			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
+#			with open(filename, 'wb') as f:
+#				f.write(decrypted_file)
 
 			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, 'big') + b'File received and processed successfully.')
 
