@@ -148,7 +148,7 @@ class Client:
 
 	# Automatic log sending
 	def auto_sending(self):
-		print('\nAutomatic sending started. Logs will be sent at 17:00 every day.\n')
+		print('\nAutomatic sending started. Logs will be sent at 17:00 every day.')
 		
 		while True:
 			time_now = datetime.now()
@@ -162,7 +162,7 @@ class Client:
 	def follow(self):
 		# Tail the log file in binary mode and trigger sending when new data appears.
 		log_path = '/var/log/syslog'
-		print('\nLog monitoring started. Logs will be sent when updated.\n')
+		print('\nLog monitoring started. Logs will be sent when updated.')
 
 		try:
 			f = open(log_path, 'rb')
