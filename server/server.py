@@ -225,6 +225,22 @@ class Server:
 				print(f"   - Key: {files['key']}")
 
 		return enc_files
+	
+	def start(self):
+		print('Connection opened at', datetime.now())
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		s.bind((self.ip, self.port))  # Bind to any interface
+		s.listen(1)
+		print('Server is listening on', self.ip, ':', self.port)
+		while True:
+			connection, address = s.accept()
+			start = time.time()
+			data = self.main_belt(address, connection)
+			size_bits = len(data) * 8
+			end = time.time()
+			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
+			print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
 
 	def start_threaded(self):
 		"""Start server in background thread and present interactive menu."""
