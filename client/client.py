@@ -148,7 +148,7 @@ class Client:
 
 	# Automatic log sending
 	def auto_sending(self):
-		print('Auto_sending started. Logs will be sent at 17:00 every day.')
+		print('\nAuto_sending started. Logs will be sent at 17:00 every day.')
 		
 		while True:
 			time_now = datetime.now()
@@ -162,7 +162,7 @@ class Client:
 	def follow(self):
 		# Tail the log file in binary mode and trigger sending when new data appears.
 		log_path = '/var/log/syslog'
-		print('Log monitoring started. Logs will be sent when updated.')
+		print('\nLog monitoring started. Logs will be sent when updated.')
 
 		try:
 			f = open(log_path, 'rb')
@@ -212,30 +212,35 @@ def main():
 	client = Client()
 	print('\n## Program started at', datetime.now(), ' ##')
 	
-	menu_string = '\n1.\tManual Log Send.\n2.\tAuto Log Send at 17:00.\n3.\tSend Logs when they update\nSelect an option from above: '
 	while True:
-		
-		menu_selection = input(menu_string)
-		if menu_selection == '1':
-			client.sending_manually()
+			print('\n--- Client Menu ---')
+			print('1. Manual Log Send.')
+			print('2. Auto Log Send at 17:00.')
+			print('3. Send Logs when they update')
+			print('4. Exit')
+			menu_selection = input('Select an option: ').strip()
 
-		elif menu_selection == '2':
-			auto_thread = threading.Thread(target=client.auto_sending, daemon=True)
-			auto_thread.start()
-			print('Automatically sending logs at 17:00 daily.')
+			if menu_selection == '1':
+				client.sending_manually()
 
-		elif menu_selection == '3':
-			# Start follow() in a background thread so it doesn't block the menu
-			update_thread = threading.Thread(target=client.follow, daemon=True)
-			update_thread.start()
-			print('Background log monitoring started.')
+			elif menu_selection == '2':
+				auto_thread = threading.Thread(target=client.auto_sending, daemon=True)
+				auto_thread.start()
+				print('Automatically sending logs at 17:00 daily.')
 
-		elif menu_selection == '4':
-			print('Exiting program.')
-			break
+			elif menu_selection == '3':
+				# Start follow() in a background thread so it doesn't block the menu
+				update_thread = threading.Thread(target=client.follow, daemon=True)
+				update_thread.start()
+				print('Background log monitoring started.')
+			
+			elif menu_selection == '4':
+				print('Exiting program.')
+				break
 
-		else:
-			print('Invalid selection!')
+
+			else:
+				print('[-] Invalid option.')
 
 if __name__ == '__main__':
 	main()
