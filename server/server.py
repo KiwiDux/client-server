@@ -81,6 +81,11 @@ class Server:
 				print('Signature is invalid.')
 			
 			randnum = random.randint(1, 9999)
+
+			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
+			with open(filename, 'wb') as f:
+				f.write(decrypted_file)
+
 			base_filename = (address, '_received_file_', randnum)
 
 			# Encrypt file using *server public key*
