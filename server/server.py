@@ -59,8 +59,8 @@ class Server:
 		print('Connection established at', datetime.now())
 		
 		try:
-			server_public_key = open('server_public_key.pem', 'rb').read()
-			connection.sendall(len(server_public_key).to_bytes(4, 'big') + server_public_key)
+			server_pub = open("server_public_key.pem", "rb").read()
+			connection.sendall(len(server_pub).to_bytes(4, "big") + server_pub)
 			
 			client_public_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
 			receive_cpk = self.receive_exact(connection, client_public_len)
@@ -80,28 +80,12 @@ class Server:
 			else:
 				print('Signature is invalid.')
 			
+			randnum = random.randint(1, 9999)
+			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
+			with open(filename, 'wb') as f:
+				f.write(decrypted_file)
 
-			#######STORE SECURELY#######
-			#server_public_key = RSA.import_key(open('server_public_key.pem', 'rb').read())
-			#cipher = PKCS1_OAEP.new(server_public_key)
-
-			# Encrypt before saving to disk
-			#blob = cipher.encrypt(decrypted_file)
-
-#			randnum = random.randint(1, 9999)
-#			filename = ((address)[0], (address)[1], '_encrypted_storage_', randnum, '.bin')
-
-#			with open(filename, 'wb') as f:
-#				f.write(blob)
-
-#			print('Securely stored encrypted file as:', filename)
-
-#			randnum = random.randint(1, 9999)
-#			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
-#			with open(filename, 'wb') as f:
-#				f.write(decrypted_file)
-
-			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, 'big') + b'File received and processed successfully.')
+			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
 
 			return decrypted_file
 		
