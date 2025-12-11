@@ -2,6 +2,7 @@
 
 import socket, os, struct, random, time
 from pathlib import Path
+from Cryptodome.Random import get_random_bytes
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
@@ -85,13 +86,47 @@ class Server:
 			else:
 				print('Signature is invalid.')
 			
-			randnum = random.randint(1, 9999)
+			# --- Secure Storage Encryption (Hybrid: AES + RSA) ---
 
-			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
+			# 1. Generate AES key
+			storage_key = self.get_random_bytes(32)
+
+			# 2. Encrypt file with AES-GCM
+			storage_cipher = AES.new(storage_key, AES.MODE_GCM)
+			storage_ciphertext, storage_tag = storage_cipher.encrypt_and_digest(decrypted_file)
+			storage_nonce = storage_cipher.nonce
+
+			# 3. Encrypt AES key with server public RSA key
+			server_pub = RSA.import_key(open('server_public_key.pem', 'rb').read())
+			rsa_cipher = PKCS1_OAEP.new(server_pub)
+			encrypted_storage_key = rsa_cipher.encrypt(storage_key)
+
+			# 4. Generate filename
+			randnum = random.randint(1, 9999)
+			base_filename = ((address)[0], (address)[1], '_received_file_', randnum)
+
+			# 5. Save AES-encrypted file
+			with open(base_filename + ".enc", "wb") as f:
+				f.write(storage_ciphertext)
+
+			# Save RSA-encrypted AES key
+			with open(base_filename + ".key.enc", "wb") as f:
+				f.write(encrypted_storage_key)
+
+			# Save GCM metadata
+			with open(base_filename + ".nonce", "wb") as f:
+				f.write(storage_nonce)
+
+			with open(base_filename + ".tag", "wb") as f:
+				f.write(storage_tag)
+
+			print("Encrypted file stored securely:")
+			print(base_filename + ".enc")
+
+
+			filename = str((address)[0] + (address)[1]) + '_received_file_' + str(randnum) + '.txt'
 			with open(filename, 'wb') as f:
 				f.write(decrypted_file)
-
-			base_filename = (address, '_received_file_', randnum)
 
 			# Encrypt file using *server public key*
 			encrypted_storage_file = self.rsa_encrypt_for_storage(decrypted_file)
