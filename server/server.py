@@ -35,22 +35,6 @@ class Server:
 			data += chunk
 		return data
 
-	def receive_chunked_file(self, connection, total_size):
-   		# Choose between 10–24 chunks
-		num_chunks = random.randint(10, 24)
-		chunk_size = total_size // num_chunks
-		received_data = b""
-		bytes_remaining = total_size
-		
-		for i in range(num_chunks):
-			# Last chunk gets the remainder
-			size = chunk_size if i < num_chunks - 1 else bytes_remaining
-			received_data += self.receive_exact(connection, size)
-			bytes_remaining -= size
-		
-		return received_data
-
-
 	def	load_keys(self):
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
 		print('Loaded server private key.')
@@ -83,20 +67,13 @@ class Server:
 			self.client_public_key = RSA.import_key(receive_cpk)
 			print('Client public key received')
 
-			encrypted_key = self.received(connection)
-
-			# Receive encrypted file (but chunked)
-			encrypted_file_size = struct.unpack(">I", self.receive_exact(connection, 4))[0]
-			encrypted_file = self.receive_chunked_file(connection, encrypted_file_size)
-
+			encrypted_key = self.received(connection) # RSA-encrypted AES key
+			encrypted_file = self.received(connection)
 			tag = self.received(connection)
 			nonce = self.received(connection)
 			signature = self.received(connection)
 			aes_key = self.decrypt_aes(encrypted_key)
-
-			# Decrypt syslog contents
 			decrypted_file = self.decrypt_file(aes_key, encrypted_file, tag, nonce)
-
 
 			if self.verify(signature, decrypted_file):
 				print('Signature is valid.')
@@ -104,21 +81,25 @@ class Server:
 				print('Signature is invalid.')
 			
 
-			server_public_key = RSA.import_key(open('server_public_key.pem', 'rb').read())
-			cipher = PKCS1_OAEP.new(server_public_key)
-			
+			#######STORE SECURELY#######
+			#server_public_key = RSA.import_key(open('server_public_key.pem', 'rb').read())
+			#cipher = PKCS1_OAEP.new(server_public_key)
+
 			# Encrypt before saving to disk
-			
-			blob = cipher.encrypt(decrypted_file)
-			randnum = random.randint(1, 9999)
-			filename = ((address)[0], (address)[1], '_encrypted_storage_', randnum, '.bin')
-			with open(filename, 'wb') as f:
-				f.write(blob)
-			print('Securely stored encrypted file as:', filename)
-			randnum = random.randint(1, 9999)
-			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
-			with open(filename, 'wb') as f:
-				f.write(decrypted_file)
+			#blob = cipher.encrypt(decrypted_file)
+
+#			randnum = random.randint(1, 9999)
+#			filename = ((address)[0], (address)[1], '_encrypted_storage_', randnum, '.bin')
+
+#			with open(filename, 'wb') as f:
+#				f.write(blob)
+
+#			print('Securely stored encrypted file as:', filename)
+
+#			randnum = random.randint(1, 9999)
+#			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
+#			with open(filename, 'wb') as f:
+#				f.write(decrypted_file)
 
 			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, 'big') + b'File received and processed successfully.')
 

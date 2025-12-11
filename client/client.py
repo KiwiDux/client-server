@@ -100,28 +100,12 @@ class Client:
 
 			pieces = [encrypted_aes_key, encrypted_file_data, tag, nonce, sig]
 
-			# Send RSA-encrypted AES key as normal
-			header = len(encrypted_aes_key).to_bytes(4, 'big')
-			client_socket.sendall(header)
-			client_socket.sendall(encrypted_aes_key)
-
-			# Send encrypted file IN CHUNKS
-			file_size = len(encrypted_file_data)
-			client_socket.sendall(file_size.to_bytes(4, 'big'))
-
-			CHUNK_SIZE = 4096
-			offset = 0
-			while offset < file_size:
-				end = offset + CHUNK_SIZE
-				client_socket.sendall(encrypted_file_data[offset:end])
-				offset = end
-
-			# Send tag, nonce, signature normally
-			for piece in [tag, nonce, sig]:
+			for piece in pieces:
 				header = len(piece).to_bytes(4, 'big')
 				client_socket.sendall(header)
 				client_socket.sendall(piece)
 
+				bytes_sent += len(header) + len(piece)
 
 			client_socket.close()
 
