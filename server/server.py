@@ -17,6 +17,10 @@ class Server:
 		#self.port = int(input('Enter the order port: '))
 		self.ip = ip
 		self.port = port
+		self.encrypted_folder = 'encrypted_logs'
+		# Create folder if it doesn't exist
+		if not os.path.exists(self.encrypted_folder):
+			os.makedirs(self.encrypted_folder)
 
 	def key_generation(self):
 		if not os.path.exists('server_private_key.pem'):
@@ -103,7 +107,7 @@ class Server:
 
 			# 4. Generate filename
 			randnum = random.randint(1, 9999)
-			base_filename = f"{address[0]}_{address[1]}_received_file_{randnum}"
+			base_filename = os.path.join(self.encrypted_folder, f"{address[0]}_{address[1]}_received_file_{randnum}")
 
 			# 5. Save AES-encrypted file
 			with open(base_filename + ".enc", "wb") as f:
@@ -141,24 +145,24 @@ class Server:
 		"""Decrypt a file that was stored using hybrid AES+RSA encryption.
 		
 		Expects:
-		- base_filename.enc (AES-encrypted file)
-		- base_filename.key.enc (RSA-encrypted AES key)
-		- base_filename.tag (GCM authentication tag)
-		- base_filename.nonce (GCM nonce)
+		- encrypted_logs/base_filename.enc (AES-encrypted file)
+		- encrypted_logs/base_filename.key.enc (RSA-encrypted AES key)
+		- encrypted_logs/base_filename.tag (GCM authentication tag)
+		- encrypted_logs/base_filename.nonce (GCM nonce)
 		"""
 		try:
 			# Load encrypted AES key and decrypt it
-			with open(base_filename + ".key.enc", "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + ".key.enc"), "rb") as f:
 				encrypted_aes_key = f.read()
 			aes_key = PKCS1_OAEP.new(self.server_private_key).decrypt(encrypted_aes_key)
 			print(f"[*] AES key decrypted from {base_filename}.key.enc")
 
 			# Load nonce, tag, and ciphertext
-			with open(base_filename + ".nonce", "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + ".nonce"), "rb") as f:
 				nonce = f.read()
-			with open(base_filename + ".tag", "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + ".tag"), "rb") as f:
 				tag = f.read()
-			with open(base_filename + ".enc", "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + ".enc"), "rb") as f:
 				ciphertext = f.read()
 
 			# Decrypt and verify
@@ -167,7 +171,7 @@ class Server:
 			print(f"[+] File decrypted and verified successfully.")
 			
 			# Save plaintext
-			output_file = base_filename + "_decrypted.txt"
+			output_file = os.path.join(self.encrypted_folder, base_filename + "_decrypted.txt")
 			with open(output_file, "wb") as f:
 				f.write(plaintext)
 			print(f"[+] Decrypted content saved to {output_file}")
@@ -181,9 +185,9 @@ class Server:
 			print(f"[-] Decryption failed: {e}")
 
 	def list_encrypted_files(self):
-		"""List all encrypted files in the current directory."""
+		"""List all encrypted files in the encrypted_logs directory."""
 		enc_files = {}
-		for file in os.listdir('.'):
+		for file in os.listdir(self.encrypted_folder):
 			if file.endswith('.enc') and not file.endswith('.key.enc'):
 				# Extract base filename
 				base = file.replace('.enc', '')
@@ -191,7 +195,7 @@ class Server:
 					enc_files[base] = {'enc': None, 'key': None, 'tag': None, 'nonce': None}
 				enc_files[base]['enc'] = file
 
-		for file in os.listdir('.'):
+		for file in os.listdir(self.encrypted_folder):
 			if file.endswith('.key.enc'):
 				base = file.replace('.key.enc', '')
 				if base not in enc_files:
