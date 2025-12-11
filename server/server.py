@@ -226,7 +226,7 @@ class Server:
 			if files['enc']:
 				print(f'   - Data: {files['enc']}')
 			if files['key']:
-				print(f'   - Key: {files['key']}')
+				print(f'   - Key: {files['key']}\n')
 
 		return enc_files
 	
@@ -245,6 +245,7 @@ class Server:
 			end = time.time()
 			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
 			print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
+
 
 	def start_threaded(self):
 		'''Start server in background thread and present interactive menu.'''
