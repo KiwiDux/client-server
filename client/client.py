@@ -108,7 +108,7 @@ class Client:
 			throughput_mbps = (bytes_sent * 8) / duration / 1_000_000
 
 			print('Logs sent successfully.')
-			print(f'Throughput: {throughput_mbps:.2f} Mbps')
+			print(f'\nThroughput: {throughput_mbps:.2f} Mbps')
 
 		except ConnectionRefusedError:
 			print('Connection failed: Server is not running.')
@@ -143,12 +143,12 @@ class Client:
 
 	# Manual log sending
 	def sending_manually(self):
-		print('Manual log sending started.')
+		print('\nManual log sending started.')
 		self.sending_logs()
 
 	# Automatic log sending
 	def auto_sending(self):
-		print('\nAuto_sending started. Logs will be sent at 17:00 every day.')
+		print('\nAutomatic sending started. Logs will be sent at 17:00 every day.')
 		
 		while True:
 			time_now = datetime.now()
@@ -226,13 +226,11 @@ def main():
 			elif menu_selection == '2':
 				auto_thread = threading.Thread(target=client.auto_sending, daemon=True)
 				auto_thread.start()
-				print('Automatically sending logs at 17:00 daily.')
 
 			elif menu_selection == '3':
 				# Start follow() in a background thread so it doesn't block the menu
 				update_thread = threading.Thread(target=client.follow, daemon=True)
 				update_thread.start()
-				print('Background log monitoring started.')
 			
 			elif menu_selection == '4':
 				print('Exiting program.')
