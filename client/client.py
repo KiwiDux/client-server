@@ -166,7 +166,7 @@ class Client:
 
 		try:
 			f = open(log_path, 'rb')
-			# Seek to end to only observe new data
+			# Seek to end to only observe new appended data
 			f.seek(0, os.SEEK_END)
 
 			while True:
@@ -190,7 +190,6 @@ class Client:
 						continue
 
 					time.sleep(0.1)
-					self.send_logs()
 					continue
 
 				# New bytes were read (bytes object)
@@ -226,9 +225,10 @@ def main():
 			print('Automatically sending logs at 17:00 daily.')
 
 		elif menu_selection == '3':
-			update_thread = threading.Thread(target=client.follow(), daemon=True)
+			# Start follow() in a background thread so it doesn't block the menu
+			update_thread = threading.Thread(target=client.follow, daemon=True)
 			update_thread.start()
-			break
+			print('Background log monitoring started.')
 
 		elif menu_selection == '4':
 			print('Exiting program.')
