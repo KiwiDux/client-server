@@ -98,7 +98,6 @@ class Client:
 				header = len(piece).to_bytes(4, 'big')
 				client_socket.sendall(header)
 				client_socket.sendall(piece)
-
 				bytes_sent += len(header) + len(piece)
 
 			client_socket.close()
@@ -237,9 +236,8 @@ def main():
 				print('Exiting program.')
 				break
 
-
 			else:
-				print('[-] Invalid option.')
+				print('\n[-] Invalid option.')
 
 if __name__ == '__main__':
 	main()

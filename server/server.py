@@ -130,7 +130,6 @@ class Server:
 			print('  GCM tag:', base_filename + '.tag')
 			print('  GCM nonce:', base_filename + '.nonce')
 
-
 			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, 'big') + b'File received and processed successfully.')
 
 			return decrypted_file
@@ -251,8 +250,8 @@ class Server:
 			size_bits = len(data) * 8
 			end = time.time()
 			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
-			#print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
-			print(f'\nThroughput: {throughput:.2f} Mbps')
+			#print(f'\nReceieved:\n{data.decode()}')
+			print(f'\nThroughput: {throughput:.2f} Mbps\n')
 
 
 	def start_threaded(self):
