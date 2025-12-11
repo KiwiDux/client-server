@@ -1,6 +1,6 @@
 # Server
 
-import socket, os, struct, random, time
+import socket, os, struct, random, time, threading
 from pathlib import Path
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Cipher import PKCS1_OAEP, AES
@@ -122,19 +122,9 @@ class Server:
 
 			print("Encrypted file stored securely:")
 			print(base_filename + ".enc")
-
-
-			filename = f"{(address)[0]}{(address)[1]}_received_file_{randnum}.txt"
-			with open(filename, 'wb') as f:
-				f.write(decrypted_file)
-
-			# Encrypt file using *server public key*
-			encrypted_storage_file = self.rsa_encrypt_for_storage(decrypted_file)
-
-			# Save encrypted file
-			with open(base_filename + "_stored.enc", "wb") as f:
-				f.write(encrypted_storage_file)
-			print('Encrypted storage file saved as ', base_filename, '_stored.enc')
+			print("  AES key (RSA-encrypted):", base_filename + ".key.enc")
+			print("  GCM tag:", base_filename + ".tag")
+			print("  GCM nonce:", base_filename + ".nonce")
 
 
 			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
@@ -147,23 +137,132 @@ class Server:
 			connection.close()
 			print('Connection closed at', datetime.now())
 
-	def start(self):
+	def decrypt_stored_file(self, base_filename):
+		"""Decrypt a file that was stored using hybrid AES+RSA encryption.
+		
+		Expects:
+		- base_filename.enc (AES-encrypted file)
+		- base_filename.key.enc (RSA-encrypted AES key)
+		- base_filename.tag (GCM authentication tag)
+		- base_filename.nonce (GCM nonce)
+		"""
+		try:
+			# Load encrypted AES key and decrypt it
+			with open(base_filename + ".key.enc", "rb") as f:
+				encrypted_aes_key = f.read()
+			aes_key = PKCS1_OAEP.new(self.server_private_key).decrypt(encrypted_aes_key)
+			print(f"[*] AES key decrypted from {base_filename}.key.enc")
+
+			# Load nonce, tag, and ciphertext
+			with open(base_filename + ".nonce", "rb") as f:
+				nonce = f.read()
+			with open(base_filename + ".tag", "rb") as f:
+				tag = f.read()
+			with open(base_filename + ".enc", "rb") as f:
+				ciphertext = f.read()
+
+			# Decrypt and verify
+			cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
+			plaintext = cipher.decrypt_and_verify(ciphertext, tag)
+			print(f"[+] File decrypted and verified successfully.")
+			
+			# Save plaintext
+			output_file = base_filename + "_decrypted.txt"
+			with open(output_file, "wb") as f:
+				f.write(plaintext)
+			print(f"[+] Decrypted content saved to {output_file}")
+			print(f"\n--- Decrypted Content (first 500 chars) ---")
+			print(plaintext[:500].decode('utf-8', errors='replace'))
+			print("--- End of Preview ---\n")
+			
+		except FileNotFoundError as e:
+			print(f"[-] Error: Missing file - {e}")
+		except Exception as e:
+			print(f"[-] Decryption failed: {e}")
+
+	def list_encrypted_files(self):
+		"""List all encrypted files in the current directory."""
+		enc_files = {}
+		for file in os.listdir('.'):
+			if file.endswith('.enc') and not file.endswith('.key.enc'):
+				# Extract base filename
+				base = file.replace('.enc', '')
+				if base not in enc_files:
+					enc_files[base] = {'enc': None, 'key': None, 'tag': None, 'nonce': None}
+				enc_files[base]['enc'] = file
+
+		for file in os.listdir('.'):
+			if file.endswith('.key.enc'):
+				base = file.replace('.key.enc', '')
+				if base not in enc_files:
+					enc_files[base] = {'enc': None, 'key': None, 'tag': None, 'nonce': None}
+				enc_files[base]['key'] = file
+
+			elif file.endswith('.tag'):
+				base = file.replace('.tag', '')
+				if base not in enc_files:
+					enc_files[base] = {'enc': None, 'key': None, 'tag': None, 'nonce': None}
+				enc_files[base]['tag'] = file
+
+			elif file.endswith('.nonce'):
+				base = file.replace('.nonce', '')
+				if base not in enc_files:
+					enc_files[base] = {'enc': None, 'key': None, 'tag': None, 'nonce': None}
+				enc_files[base]['nonce'] = file
+
+		if not enc_files:
+			print("[-] No encrypted files found.")
+			return None
+
+		print(f"\n[+] Found {len(enc_files)} encrypted file set(s):\n")
+		for i, (base, files) in enumerate(enc_files.items(), 1):
+			complete = all([files['enc'], files['key'], files['tag'], files['nonce']])
+			status = "[COMPLETE]" if complete else "[INCOMPLETE]"
+			print(f"{i}. {base} {status}")
+			if files['enc']:
+				print(f"   - Data: {files['enc']}")
+			if files['key']:
+				print(f"   - Key: {files['key']}")
+
+		return enc_files
+
+	def start_threaded(self):
+		"""Start server in background thread and present interactive menu."""
 		self.key_generation()
 		self.load_keys()
-		print('Connection opened at', datetime.now())
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		s.bind((self.ip, self.port))  # Bind to any interface
-		s.listen(1)
-		print('Server is listening on', self.ip, ':', self.port)
+
+		# Start server in background thread
+		server_thread = threading.Thread(target=self.start, daemon=True)
+		server_thread.start()
+		print("\n[+] Server started in background.")
+		
+		# Main menu loop
 		while True:
-			connection, address = s.accept()
-			start = time.time()
-			data = self.main_belt(address, connection)
-			size_bits = len(data) * 8
-			end = time.time()
-			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
-			print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
+			print("\n--- Server Menu ---")
+			print("1. List encrypted files")
+			print("2. Decrypt a file")
+			print("3. Exit")
+			choice = input("Select an option: ").strip()
+
+			if choice == '1':
+				self.list_encrypted_files()
+
+			elif choice == '2':
+				enc_files = self.list_encrypted_files()
+				if enc_files:
+					try:
+						idx = int(input("\nEnter file number to decrypt: "))
+						base_filename = list(enc_files.keys())[idx - 1]
+						self.decrypt_stored_file(base_filename)
+					except (ValueError, IndexError):
+						print("[-] Invalid selection.")
+
+			elif choice == '3':
+				print("Exiting...")
+				break
+
+			else:
+				print("[-] Invalid option.")
 		
 if __name__ == '__main__':
-	Server().start()
+	Server().start_threaded()
