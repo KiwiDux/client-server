@@ -103,7 +103,7 @@ class Server:
 
 			# 4. Generate filename
 			randnum = random.randint(1, 9999)
-			base_filename = ((address)[0] + (address)[1] + '_received_file_' + randnum)
+			base_filename = f"{address[0]}_{address[1]}_received_file_{randnum}"
 
 			# 5. Save AES-encrypted file
 			with open(base_filename + ".enc", "wb") as f:
