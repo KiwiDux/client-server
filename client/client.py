@@ -159,11 +159,26 @@ class Client:
 			else:
 				time.sleep(1)
 
+	def follow(self):
+		
+		
+		print('Log monitoring started. Logs will be sent when updated.')
+		thefile = self.reading_logs() 
+		thefile.seek(0, os.SEEK_END)
+		while True:
+			line = thefile.readline()
+			if not line:
+				time.sleep(0.1)
+				continue
+			print('New log entry detected. Sending updated logs...')
+			self.sending_logs()
+		
+
 def main():
 	client = Client()
 	print('\n## Program started at', datetime.now(), ' ##')
 	
-	menu_string = '\n1.\tManual Log Send.\n2.\tAuto Log Send at 17:00.\n\nSelect an option from above: '
+	menu_string = '\n1.\tManual Log Send.\n2.\tAuto Log Send at 17:00.\n3.\t Send Logs when they update\nSelect an option from above: '
 	while True:
 		
 		menu_selection = input(menu_string)
@@ -176,6 +191,11 @@ def main():
 			print('Automatically sending logs at 17:00 daily.')
 
 		elif menu_selection == '3':
+			
+			print('Exiting program.')
+			break
+
+		elif menu_selection == '4':
 			print('Exiting program.')
 			break
 
