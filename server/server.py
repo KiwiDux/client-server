@@ -11,7 +11,7 @@ from datetime import datetime
 
 class Server:
 
-	def __init__(self, ip="192.168.200.4", port=1234):
+	def __init__(self, ip='192.168.200.4', port=1234):
 		#self.ip = input('Enter the order IP address: ')
 		#self.port = int(input('Enter the order port: '))
 		self.ip = ip
@@ -19,15 +19,15 @@ class Server:
 
 	def key_generation(self):
 		if not os.path.exists('server_private_key.pem'):
-			print("Generating Keys...")
+			print('Generating Keys...')
 			key = RSA.generate(2048)
 			open('server_private_key.pem', 'wb').write(key.export_key())
 			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
 		
-		print("Keys generated.")
+		print('Keys generated.')
 	
 	def receive_exact(self, sock, length):
-		data = b""
+		data = b''
 		while len(data) < length:
 			chunk = sock.recv(length - len(data))
 			if not chunk:
@@ -37,7 +37,7 @@ class Server:
 
 	def	load_keys(self):
 		self.server_private_key = RSA.import_key(open('server_private_key.pem', 'rb').read())
-		print("Loaded server private key.")
+		print('Loaded server private key.')
 	
 	def received(self, sock):
 		length = struct.unpack('>I', self.receive_exact(sock, 4))[0]
@@ -59,8 +59,8 @@ class Server:
 		print('Connection established at', datetime.now())
 		
 		try:
-			server_pub = open("server_public_key.pem", "rb").read()
-			connection.sendall(len(server_pub).to_bytes(4, "big") + server_pub)
+			server_public_key = open('server_public_key.pem', 'rb').read()
+			connection.sendall(len(server_public_key).to_bytes(4, 'big') + server_public_key)
 			
 			client_public_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
 			receive_cpk = self.receive_exact(connection, client_public_len)
@@ -80,17 +80,33 @@ class Server:
 			else:
 				print('Signature is invalid.')
 			
+
+			#######STORE SECURELY#######
+			server_public_key = RSA.import_key(open('server_public_key.pem', 'rb').read())
+			cipher = PKCS1_OAEP.new(server_public_key)
+
+			# Encrypt before saving to disk
+			blob = cipher.encrypt(decrypted_file)
+
+			randnum = random.randint(1, 9999)
+			filename = ((address)[0], (address)[1], '_encrypted_storage_', randnum, '.bin')
+
+			with open(filename, 'wb') as f:
+				f.write(blob)
+
+			print('Securely stored encrypted file as:', filename)
+
 			randnum = random.randint(1, 9999)
 			filename = str(address) + '_received_file_' + str(randnum) + '.txt'
 			with open(filename, 'wb') as f:
 				f.write(decrypted_file)
 
-			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
+			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, 'big') + b'File received and processed successfully.')
 
 			return decrypted_file
 		
 		except Exception as e:
-			print("Error:", e)
+			print('Error:', e)
 		finally:
 			connection.close()
 			print('Connection closed at', datetime.now())
@@ -111,7 +127,7 @@ class Server:
 			size_bits = len(data) * 8
 			end = time.time()
 			throughput = (size_bits / (end - start)) / 1000000  # in Mbps
-			print(f"Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps")
+			print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
 		
 if __name__ == '__main__':
 	Server().start()

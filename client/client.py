@@ -18,15 +18,15 @@ class Client:
 
 	def key_generation(self):
 		if not os.path.exists('client_private_key.pem'):
-			print("Generating Keys...")
+			print('Generating Keys...')
 			key = RSA.generate(2048)
 			open('client_private_key.pem', 'wb').write(key.export_key())
 			open('client_public_key.pem', 'wb').write(key.publickey().export_key())
 		
-		print("Keys generated.")
+		print('Keys generated.')
 	
 	def receive_exact(self, sock, length):
-		data = b""
+		data = b''
 		while len(data) < length:
 			chunk = sock.recv(length - len(data))
 			if not chunk:
@@ -37,7 +37,7 @@ class Client:
 	def	load_keys(self):
 		self.key_generation()
 		self.client_private_key = RSA.import_key(open('client_private_key.pem', 'rb').read())
-		print("Loaded client private key.")
+		print('Loaded client private key.')
 	
 	def read_logs(self): # Read Logs
 		with open('/var/log/syslog', 'rb') as f:
@@ -83,14 +83,14 @@ class Client:
 
 		try:
 			# Receive server public key
-			server_key_length = struct.unpack(">I", client_socket.recv(4))[0]
+			server_key_length = struct.unpack('>I', client_socket.recv(4))[0]
 			server_key_bytes = self.receive_exact(client_socket, server_key_length)
 			self.server_public_key = RSA.import_key(server_key_bytes)
-			print("Received server public key")
+			print('Received server public key')
 			
 			# Send client public key
-			client_pub = open("client_public_key.pem", "rb").read()
-			client_socket.sendall(len(client_pub).to_bytes(4, "big") + client_pub)
+			client_pub = open('client_public_key.pem', 'rb').read()
+			client_socket.sendall(len(client_pub).to_bytes(4, 'big') + client_pub)
 			print('Client public key sent.')
 
 			encrypted_aes_key = self.aes_key_encryption(aes_key)
@@ -101,7 +101,7 @@ class Client:
 			pieces = [encrypted_aes_key, encrypted_file_data, tag, nonce, sig]
 
 			for piece in pieces:
-				header = len(piece).to_bytes(4, "big")
+				header = len(piece).to_bytes(4, 'big')
 				client_socket.sendall(header)
 				client_socket.sendall(piece)
 
@@ -113,8 +113,8 @@ class Client:
 			duration = end_time - start_time
 			throughput_mbps = (bytes_sent * 8) / duration / 1_000_000
 
-			print("Logs sent successfully.")
-			print(f"Throughput: {throughput_mbps:.2f} Mbps")
+			print('Logs sent successfully.')
+			print(f'Throughput: {throughput_mbps:.2f} Mbps')
 
 		except ConnectionRefusedError:
 			print('Connection failed: Server is not running.')
@@ -126,28 +126,28 @@ class Client:
 
 
 	def send_logs(self):
-		"""Start the client connection"""
+		'''Start the client connection'''
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
 		try:
 			self.load_keys()
 			logs = self.read_logs()
-			print(f"Read {len(logs)} bytes from log file.")
+			print(f'Read {len(logs)} bytes from log file.')
 
 			signature = self.sign_logfile(logs)
-			print("Log file signed.")
+			print('Log file signed.')
 
 			encrypted_file_data, tag, nonce, aes_key = self.encrypt_logs(logs)
-			print("Log file encrypted.")
+			print('Log file encrypted.')
 
 			encrypted_data = (aes_key, encrypted_file_data, tag, nonce, signature)
-			print("AES key encrypted with RSA")
+			print('AES key encrypted with RSA')
 			self.send_data(encrypted_data)
 		
 		except Exception as e:
-			print("Error during sending:", e)
+			print('Error during sending:', e)
 
 	def send_manually(self):
-		print(" Manual log send started.")
+		print(' Manual log send started.')
 		self.send_logs()
 
 	def auto_send(self):
