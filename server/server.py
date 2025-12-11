@@ -69,8 +69,8 @@ class Server:
 		print('Connection established at', datetime.now())
 		
 		try:
-			server_pub = open("server_public_key.pem", "rb").read()
-			connection.sendall(len(server_pub).to_bytes(4, "big") + server_pub)
+			server_pub = open('server_public_key.pem', 'rb').read()
+			connection.sendall(len(server_pub).to_bytes(4, 'big') + server_pub)
 			
 			client_public_len = struct.unpack('>I', self.receive_exact(connection, 4))[0]
 			receive_cpk = self.receive_exact(connection, client_public_len)
@@ -107,31 +107,31 @@ class Server:
 
 			# 4. Generate filename
 			randnum = random.randint(1, 9999)
-			base_filename = os.path.join(self.encrypted_folder, f"{address[0]}_{address[1]}_received_file_{randnum}")
+			base_filename = os.path.join(self.encrypted_folder, f'{address[0]}_{address[1]}_received_file_{randnum}')
 
 			# 5. Save AES-encrypted file
-			with open(base_filename + ".enc", "wb") as f:
+			with open(base_filename + '.enc', 'wb') as f:
 				f.write(storage_ciphertext)
 
 			# Save RSA-encrypted AES key
-			with open(base_filename + ".key.enc", "wb") as f:
+			with open(base_filename + '.key.enc', 'wb') as f:
 				f.write(encrypted_storage_key)
 
 			# Save GCM metadata
-			with open(base_filename + ".nonce", "wb") as f:
+			with open(base_filename + '.nonce', 'wb') as f:
 				f.write(storage_nonce)
 
-			with open(base_filename + ".tag", "wb") as f:
+			with open(base_filename + '.tag', 'wb') as f:
 				f.write(storage_tag)
 
-			print("Encrypted file stored securely:")
-			print(base_filename + ".enc")
-			print("  AES key (RSA-encrypted):", base_filename + ".key.enc")
-			print("  GCM tag:", base_filename + ".tag")
-			print("  GCM nonce:", base_filename + ".nonce")
+			print('Encrypted file stored securely:')
+			print(base_filename + '.enc')
+			print('  AES key (RSA-encrypted):', base_filename + '.key.enc')
+			print('  GCM tag:', base_filename + '.tag')
+			print('  GCM nonce:', base_filename + '.nonce')
 
 
-			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, "big") + b'File received and processed successfully.')
+			connection.sendall(len(b'File received and processed successfully.').to_bytes(4, 'big') + b'File received and processed successfully.')
 
 			return decrypted_file
 		
@@ -142,50 +142,50 @@ class Server:
 			print('Connection closed at', datetime.now())
 
 	def decrypt_stored_file(self, base_filename):
-		"""Decrypt a file that was stored using hybrid AES+RSA encryption.
+		'''Decrypt a file that was stored using hybrid AES+RSA encryption.
 		
 		Expects:
 		- encrypted_logs/base_filename.enc (AES-encrypted file)
 		- encrypted_logs/base_filename.key.enc (RSA-encrypted AES key)
 		- encrypted_logs/base_filename.tag (GCM authentication tag)
 		- encrypted_logs/base_filename.nonce (GCM nonce)
-		"""
+		'''
 		try:
 			# Load encrypted AES key and decrypt it
-			with open(os.path.join(self.encrypted_folder, base_filename + ".key.enc"), "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + '.key.enc'), 'rb') as f:
 				encrypted_aes_key = f.read()
 			aes_key = PKCS1_OAEP.new(self.server_private_key).decrypt(encrypted_aes_key)
-			print(f"[*] AES key decrypted from {base_filename}.key.enc")
+			print(f'[*] AES key decrypted from {base_filename}.key.enc')
 
 			# Load nonce, tag, and ciphertext
-			with open(os.path.join(self.encrypted_folder, base_filename + ".nonce"), "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + '.nonce'), 'rb') as f:
 				nonce = f.read()
-			with open(os.path.join(self.encrypted_folder, base_filename + ".tag"), "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + '.tag'), 'rb') as f:
 				tag = f.read()
-			with open(os.path.join(self.encrypted_folder, base_filename + ".enc"), "rb") as f:
+			with open(os.path.join(self.encrypted_folder, base_filename + '.enc'), 'rb') as f:
 				ciphertext = f.read()
 
 			# Decrypt and verify
 			cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
 			plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-			print(f"[+] File decrypted and verified successfully.")
+			print(f'[+] File decrypted and verified successfully.')
 			
 			# Save plaintext
-			output_file = os.path.join(self.encrypted_folder, base_filename + "_decrypted.txt")
-			with open(output_file, "wb") as f:
+			output_file = os.path.join(self.encrypted_folder, base_filename + '_decrypted.txt')
+			with open(output_file, 'wb') as f:
 				f.write(plaintext)
-			print(f"[+] Decrypted content saved to {output_file}")
-			print(f"\n--- Decrypted Content (first 500 chars) ---")
+			print(f'[+] Decrypted content saved to {output_file}')
+			print(f'\n--- Decrypted Content (first 500 chars) ---')
 			print(plaintext[:500].decode('utf-8', errors='replace'))
-			print("--- End of Preview ---\n")
+			print('--- End of Preview ---\n')
 			
 		except FileNotFoundError as e:
-			print(f"[-] Error: Missing file - {e}")
+			print(f'[-] Error: Missing file - {e}')
 		except Exception as e:
-			print(f"[-] Decryption failed: {e}")
+			print(f'[-] Decryption failed: {e}')
 
 	def list_encrypted_files(self):
-		"""List all encrypted files in the encrypted_logs directory."""
+		'''List all encrypted files in the encrypted_logs directory.'''
 		enc_files = {}
 		for file in os.listdir(self.encrypted_folder):
 			if file.endswith('.enc') and not file.endswith('.key.enc'):
@@ -215,18 +215,18 @@ class Server:
 				enc_files[base]['nonce'] = file
 
 		if not enc_files:
-			print("[-] No encrypted files found.")
+			print('[-] No encrypted files found.')
 			return None
 
-		print(f"\n[+] Found {len(enc_files)} encrypted file set(s):\n")
+		print(f'\n[+] Found {len(enc_files)} encrypted file set(s):\n')
 		for i, (base, files) in enumerate(enc_files.items(), 1):
 			complete = all([files['enc'], files['key'], files['tag'], files['nonce']])
-			status = "[COMPLETE]" if complete else "[INCOMPLETE]"
-			print(f"{i}. {base} {status}")
+			status = '[COMPLETE]' if complete else '[INCOMPLETE]'
+			print(f'{i}. {base} {status}')
 			if files['enc']:
-				print(f"   - Data: {files['enc']}")
+				print(f'   - Data: {files['enc']}')
 			if files['key']:
-				print(f"   - Key: {files['key']}")
+				print(f'   - Key: {files['key']}')
 
 		return enc_files
 	
@@ -247,22 +247,22 @@ class Server:
 			print(f'Receieved:\n{data.decode()}\n| Throughput: {throughput:.2f} Mbps')
 
 	def start_threaded(self):
-		"""Start server in background thread and present interactive menu."""
+		'''Start server in background thread and present interactive menu.'''
 		self.key_generation()
 		self.load_keys()
 
 		# Start server in background thread
 		server_thread = threading.Thread(target=self.start, daemon=True)
 		server_thread.start()
-		print("\n[+] Server started in background.")
+		print('\n[+] Server started in background.')
 		
 		# Main menu loop
 		while True:
-			print("\n--- Server Menu ---")
-			print("1. List encrypted files")
-			print("2. Decrypt a file")
-			print("3. Exit")
-			choice = input("Select an option: ").strip()
+			print('\n--- Server Menu ---')
+			print('1. List encrypted files')
+			print('2. Decrypt a file')
+			print('3. Exit')
+			choice = input('Select an option: ').strip()
 
 			if choice == '1':
 				self.list_encrypted_files()
@@ -271,18 +271,18 @@ class Server:
 				enc_files = self.list_encrypted_files()
 				if enc_files:
 					try:
-						idx = int(input("\nEnter file number to decrypt: "))
+						idx = int(input('\nEnter file number to decrypt: '))
 						base_filename = list(enc_files.keys())[idx - 1]
 						self.decrypt_stored_file(base_filename)
 					except (ValueError, IndexError):
-						print("[-] Invalid selection.")
+						print('[-] Invalid selection.')
 
 			elif choice == '3':
-				print("Exiting...")
+				print('Exiting...')
 				break
 
 			else:
-				print("[-] Invalid option.")
+				print('[-] Invalid option.')
 		
 if __name__ == '__main__':
 	Server().start_threaded()
