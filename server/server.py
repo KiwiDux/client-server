@@ -7,7 +7,7 @@ from Cryptodome.Cipher import PKCS1_OAEP, AES
 from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Server:
@@ -19,18 +19,31 @@ class Server:
 		self.port = port
 		self.encrypted_folder = 'encrypted_logs'
 		# Create folder if it doesn't exist
-		if not os.path.exists(self.encrypted_folder):
-			os.makedirs(self.encrypted_folder)
+		os.makedirs(self.encrypted_folder, exist_ok=True)
+		self.last_rotation = datetime.now()
 
 	def key_generation(self):
-		if not os.path.exists('server_private_key.pem'):
-			print('Generating Keys...')
-			key = RSA.generate(2048)
-			open('server_private_key.pem', 'wb').write(key.export_key())
-			open('server_public_key.pem', 'wb').write(key.publickey().export_key())
 		
+		key = RSA.generate(2048)
+		with  open('server_private_key.pem', 'wb') as f:
+			f.write(key.export_key())
+		with open('server_public_key.pem', 'wb') as f:
+			f.write(key.publickey().export_key())
+	
+		self.last_rotation = datetime.now()
+
 		print('Keys generated.')
 	
+	def rotate_keys_daily(self):
+		while True:
+			# Check if 24 hours have passed since last rotation
+			if datetime.now() - self.last_rotation > timedelta(hours=24):
+				print('\n[*] Rotating server keys...')
+				self.key_generation()
+				self.load_keys()
+				print('[+] Server keys rotated successfully.\n')
+			time.sleep(3600)  # Check once per hour
+
 	def receive_exact(self, sock, length):
 		data = b''
 		while len(data) < length:
@@ -258,6 +271,9 @@ class Server:
 		'''Start server in background thread and present interactive menu.'''
 		self.key_generation()
 		self.load_keys()
+		
+		# Start key rotation thread
+		threading.Thread(target=self.rotate_keys_daily, daemon=True).start()
 
 		# Start server in background thread
 		server_thread = threading.Thread(target=self.start, daemon=True)
