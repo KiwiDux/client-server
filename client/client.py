@@ -251,7 +251,6 @@ class Client:
 
 def main():
 	client = Client()
-	client.key_generation()
 	print('main')
 	client.loading_keys()
 	threading.Thread(target=client.rotate_keys_daily, daemon=True).start()
