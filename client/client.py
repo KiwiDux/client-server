@@ -47,6 +47,7 @@ class Client:
 
 	def	loading_keys(self):
 		self.key_generation() 
+		print ('Loading_key')
 		self.client_private_key = RSA.import_key(open('client_private_key.pem', 'rb').read())
 		print('Loaded client private key.')
 	
@@ -251,6 +252,7 @@ class Client:
 def main():
 	client = Client()
 	client.key_generation()
+	print('main')
 	client.loading_keys()
 	threading.Thread(target=client.rotate_keys_daily, daemon=True).start()
 
