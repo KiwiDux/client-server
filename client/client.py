@@ -6,7 +6,7 @@ from Cryptodome.Hash import SHA512
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
 from Cryptodome.Random import get_random_bytes
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Client:
@@ -16,14 +16,24 @@ class Client:
 		self.server_ip = '192.168.200.4'
 		self.server_port = 1234
 
-	# Generate AES keys
 	def key_generation(self):
-		if not os.path.exists('client_private_key.pem'): # path to the client's private key
-			print('Generating Keys...') 
-			key = RSA.generate(2048) # generate key with AES
-			open('client_private_key.pem', 'wb').write(key.export_key())
-			open('client_public_key.pem', 'wb').write(key.publickey().export_key())
-		print('Keys generated.')
+		print('Generating client RSA keys...')
+		key = RSA.generate(2048)
+		with open('client_private_key.pem', 'wb') as f:
+			f.write(key.export_key())
+		with open('client_public_key.pem', 'wb') as f:
+			f.write(key.publickey().export_key())
+		self.last_rotation = datetime.now()
+		print('Client keys generated at', self.last_rotation)
+
+	def rotate_keys_daily(self):
+		while True:
+			if datetime.now() - self.last_rotation > timedelta(hours=24):
+				print('\n[*] Rotating client keys...')
+				self.key_generation()
+				self.loading_keys()
+				print('[+] Client keys rotated successfully.\n')
+			time.sleep(3600)  # Check hourly
 	
 	# Receive and return the data received over the socket connection
 	def socket_receive(self, sock, length):
@@ -121,6 +131,8 @@ class Client:
 	def sending_logs(self):
 		'''Start the client connection'''
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
+		self.loading_keys()
+
 		
 		try:
 			self.loading_keys()
@@ -240,6 +252,8 @@ class Client:
 
 def main():
 	client = Client()
+	client.key_generation()
+	client.loading_keys()
 	print('\n## Program started at', datetime.now(), ' ##')
 	
 	while True:
