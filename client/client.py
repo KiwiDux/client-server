@@ -254,6 +254,8 @@ def main():
 	client = Client()
 	client.key_generation()
 	client.loading_keys()
+	threading.Thread(target=client.rotate_keys_daily, daemon=True).start()
+
 	print('\n## Program started at', datetime.now(), ' ##')
 	
 	while True:
