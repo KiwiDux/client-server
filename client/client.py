@@ -131,8 +131,6 @@ class Client:
 	def sending_logs(self):
 		'''Start the client connection'''
 		print('Connecting to ', self.server_ip, ':', self.server_port, '...')
-		self.loading_keys()
-
 		
 		try:
 			self.loading_keys()
