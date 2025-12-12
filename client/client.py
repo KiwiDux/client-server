@@ -206,7 +206,37 @@ class Client:
 					f.close()
 				except Exception:
 					pass
+
+	# Send a test file with a specified number of bytes
+	def send_test_file(self):
+		try:
+			amount = int(input("Enter number of bytes to send: "))
+			if amount <= 0:
+				print("Invalid size.")
+				return
+			
+			print(f"Generating {amount} bytes of test data...")
+			test_data = os.urandom(amount)
+
+			# Load keys
+			self.loading_keys()
+
+			# Sign
+			signature = self.signing_log_files(test_data)
+			print("Test data signed.")
+
+			# Encrypt
+			encrypted_file_data, tag, nonce, aes_key = self.encrypting_logs(test_data)
+			print("Test data encrypted.")
+
+			encrypted_data = (aes_key, encrypted_file_data, tag, nonce, signature)
+			print("Sending test data now...")
+			self.sending_data(encrypted_data)
 		
+		except ValueError:
+			print("Please enter a valid number.")
+		except Exception as e:
+			print("Error sending test file:", e)
 
 def main():
 	client = Client()
