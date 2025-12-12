@@ -217,7 +217,8 @@ def main():
 			print('1. Manual Log Send.')
 			print('2. Auto Log Send at 17:00.')
 			print('3. Send Logs when they update')
-			print('4. Exit')
+			print('4. Send test file (1, 100, 1000, or any number of bytes)')
+			print('5. Exit')
 			menu_selection = input('Select an option: ').strip()
 
 			if menu_selection == '1':
@@ -233,6 +234,9 @@ def main():
 				update_thread.start()
 			
 			elif menu_selection == '4':
+				client.send_test_file()
+			
+			elif menu_selection == '5':
 				print('Exiting program.')
 				break
 
